@@ -48,6 +48,7 @@ namespace sample {
 
 		struct ProtectionOptions {
 			bool isAdHoc;
+			std::vector<std::string> owner;
 			std::vector<std::string> users;
 			std::vector<std::string> rights;
 			std::vector<std::string> roles;
@@ -61,6 +62,7 @@ namespace sample {
 			Action(const mip::ApplicationInfo appInfo,
 				const std::string& username,
 				const std::string& password);
+			~Action();
 
 			void ListTemplates();							// List all labels associated engine loaded for user						
 			void ProtectString(const std::string& plaintext, std::string& ciphertext, const std::vector<uint8_t>& serializedLicense);

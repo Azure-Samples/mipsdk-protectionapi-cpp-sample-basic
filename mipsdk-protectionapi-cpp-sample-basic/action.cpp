@@ -27,6 +27,7 @@
 
 #include "action.h"
 
+#include "mip/mip_init.h"
 #include "mip/common_types.h"
 #include "mip/protection/protection_profile.h"
 #include "mip/protection/protection_engine.h"
@@ -73,6 +74,13 @@ namespace sample {
 			mAuthDelegate = std::make_shared<sample::auth::AuthDelegateImpl>(mAppInfo, mUsername, mPassword);
 		}
 		
+		Action::~Action()
+		{
+			mProfile = nullptr;
+			mEngine = nullptr;
+			mip::ReleaseAllResources();
+		}
+
 		void sample::file::Action::AddNewProtectionProfile()
 		{			
 			ProtectionProfile::Settings profileSettings("mip_data", false, mAuthDelegate, std::make_shared<sample::consent::ConsentDelegateImpl>(), std::make_shared<ProtectionProfileObserverImpl>(), mAppInfo);			
@@ -89,8 +97,9 @@ namespace sample {
 				AddNewProtectionProfile();
 			}
 		
+			// Set the engine identity to the provided username. This username is used for service discovery.
 			ProtectionEngine::Settings engineSettings(mip::Identity(mUsername), "");
-
+			
 			auto enginePromise = std::make_shared<std::promise<std::shared_ptr<ProtectionEngine>>>();
 			auto engineFuture = enginePromise->get_future();
 			mProfile->AddEngineAsync(engineSettings, enginePromise);
@@ -160,8 +169,8 @@ namespace sample {
 			mEngine->GetTemplatesAsync(engineObserver, loadPromise);
 			auto templates = loadFuture.get();
 			
-			for (const auto& temp : *templates) {
-				cout << "TEMPLATE:" << "\n\tId: " << temp << endl;
+			for (const auto& protectionTemplate: *templates) {
+				cout << "Id: " << protectionTemplate << endl;
 			}
 		}
 

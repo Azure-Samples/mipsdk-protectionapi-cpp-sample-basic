@@ -33,19 +33,13 @@ The application demonstrates the following:
 
 > **Project folder** refers to the **MipSdk-ProtectionApi-Cpp-Sample-Basic\MipSdk-ProtectionApi-Cpp-Sample-Basic** directory in the folder where you cloned the repository.
 
-1. Download MIP SDK Binaries from https://aka.ms/mipsdkbinaries and extract to a folder.
-2. From a command prompt, run: **git clone https://github.com/Azure-Samples/MipSdk-ProtectionApi-Cpp-Sample-Basic**
-3. In the folder where the ZIP was extracted, locate **mip_sdk_file_win32_version.zip** and extract the contents to a folder.
-4. Open the folder where the ZIP file was extracted in Windows Explorer.
-5. Copy the **include** folder in to the project folder.
-6. Navigate to **bins\debug\amd64** in the extracted File API ZIP.
-7. Copy *.lib to the project folder.
-8. Create a folder called **sdkbins** in the project folder.
-9. Copy *.dll from the **bins\debug\amd64** folder in to the **sdkbins** folder.
-10. Launch the project by double-clicking **MipSdk-ProtectionApi-Cpp-Sample-Basic.sln**
-11. When the project starts, set the project type to **x64**
-12. In Visual Studio, click the **Build** menu, then click **Build**. The application should compile at this point, but will crash if run.
-13. Continue to the steps below to configure the Azure AD App Registration and update the sample code.
+1. From a command prompt, run: **git clone https://github.com/Azure-Samples/MipSdk-ProtectionApi-Cpp-Sample-Basic**
+1. Launch the project by double-clicking **MipSdk-ProtectionApi-Cpp-Sample-Basic.sln**
+1. When the project starts, set the project type to **x64**
+1. Right click the project in Visual Studio and select **Manage NuGet Packages**
+1. Browse for *Microsoft.InformationProtection.Protection* and install.
+1. In Visual Studio, click the **Build** menu, then click **Build**. The application should compile at this point, but will crash if run.
+1. Continue to the steps below to configure the Azure AD App Registration and update the sample code.
 
 ### Create an Azure AD App Registration
 
@@ -83,8 +77,9 @@ The **Registered app** blade should now be displayed.
 ### Update Client ID, Username, and Password
 
 1. Open up **main.cpp**.
-2. Find line 61 and replace **YOUR CLIENT HERE** with the client ID copied from the AAD App Registration.
-3. Find line 68 and enter your test username and password.
+2. Find line 62 and replace **YOUR CLIENT ID HERE** with the client ID copied from the AAD App Registration.
+3. Update the strings for application name and version on line 62.
+4. Find line 69 and enter your test username and password.
 
 > Hard coding a username and password isn't recommended. For the scope of this sample, it's an easier way to abstract auth. We'll update this soon, but for now this is a good cross-platform example. 
 
@@ -97,6 +92,11 @@ Press F5 to run the sample. The console application will start and after a brief
 - Enter a plaintext string.
 
 The application will obtain a publishing license, use it to encrypt the string, then to decrypt the string.
+
+## Troubleshooting
+
+If the application fails to authenticate, ensure that python.exe is in the system path and that the version is Python 2.7. Alternatively, updated line 61 in auth.cpp to point to the exact path of the executable.
+
 
 ## Resources
 

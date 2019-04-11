@@ -59,26 +59,25 @@ int main()
 	// Client ID should be the client ID registered in Azure AD for your custom application.
 	// Friendly Name should be the name of the application as it should appear in reports.
 	// Version should should be version number of the application you're writing. This data will show in logs. 
-	mip::ApplicationInfo appInfo{ "YOUR CLIENT ID HERE", "YOUR APP NAME HERE", "YOUR APP VERSION HERE" };
+	mip::ApplicationInfo appInfo{ "YOUR CLIENT ID HERE", "YOUR APP NAME HERE", "YOUR APP VERSION" };
 	
 	// All actions for this tutorial project are implemented in samples::file::Action
 	// Source files are Action.h/cpp.
 	// "File" was chosen because this example is specifically for the MIP SDK File API. 
 	// Action's constructor takes in the mip::ApplicationInfo object and uses the client ID for auth.
 	// Username and password are required in this sample as the oauth2 token is obtained via Python script and basic auth.
-	Action action = Action(appInfo, "YOUR TEST USERNAME HERE","YOUR TEST USE PASSWORD HERE");
+	Action action = Action(appInfo, "YOUR TEST USER NAME","YOUR TEST USER PASSWORD");
 
 	while (true)
 	{
 		templateToApply = "";
 
 		// Call action.ListLabels() to display all available labels, then pause.
-		action.ListTemplates();
-		system("pause");
+		cout << "*** Template List: " << endl;
+		action.ListTemplates();		
 
 		// Prompt the user to copy the Label ID from a displayed label. This will be stored
-		// then applied later to a file.
-
+		// then applied later to a file.		
 		cout << "Copy a template ID from above to apply to a new string or q to quit." << endl;
 		cout << endl << "Template ID: ";
 		cin >> templateToApply;
@@ -88,23 +87,26 @@ int main()
 			return 0;
 		}
 
+		// Generate a new publishing license.
 		auto publishingLicense = action.GetPublishingLicense(templateToApply);
 
 		// Prompt the user to enter a file. A labeled copy of this file will be created.
 		cout << "Enter some text to encrypt: ";
 		std::getline(std::cin >> std::ws, plaintext);
-		
+				
 		// Show action plan
 		cout << "Applying Label ID " + templateToApply + " to: " << endl << plaintext << endl;
 
+		// Protect the input string using the previously generated PL.
 		action.ProtectString(plaintext, ciphertext, publishingLicense);
 
 		cout << "Protected output: " << endl << ciphertext << endl;
-
 		cout << endl << "Decrypting string: " << endl << endl;
 
+		// Use the same PL to decrypt the ciphertext.
 		action.DecryptString(decryptedText, ciphertext, publishingLicense);
 
+		// Output decrypted content. Should match original input text.
 		cout << decryptedText << endl;
 
 		system("pause");
