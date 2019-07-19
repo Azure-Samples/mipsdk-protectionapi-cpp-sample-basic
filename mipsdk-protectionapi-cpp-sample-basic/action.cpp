@@ -76,14 +76,30 @@ namespace sample {
 		
 		Action::~Action()
 		{
-			mProfile = nullptr;
 			mEngine = nullptr;
-			mip::ReleaseAllResources();
+			mProfile = nullptr;
+			mMipContext = nullptr;
 		}
 
 		void sample::file::Action::AddNewProtectionProfile()
 		{			
-			ProtectionProfile::Settings profileSettings("mip_data", false, mAuthDelegate, std::make_shared<sample::consent::ConsentDelegateImpl>(), std::make_shared<ProtectionProfileObserverImpl>(), mAppInfo);			
+			//Create MipContext
+			mMipContext = mip::MipContext::Create(
+				mAppInfo,
+				"mip_data",
+				mip::LogLevel::Trace,
+				nullptr /*loggerDelegateOverride*/,
+				nullptr /*telemetryOverride*/
+			);
+
+			// Initialize ProtectionProfileSettings using MipContext
+			ProtectionProfile::Settings profileSettings(mMipContext,
+				mip::CacheStorageType::OnDiskEncrypted,
+				mAuthDelegate,
+				std::make_shared<sample::consent::ConsentDelegateImpl>(),
+				std::make_shared<ProtectionProfileObserverImpl>()
+			);
+
 			auto profilePromise = std::make_shared<std::promise<std::shared_ptr<ProtectionProfile>>>();
 			auto profileFuture = profilePromise->get_future();			
 			ProtectionProfile::LoadAsync(profileSettings, profilePromise);			

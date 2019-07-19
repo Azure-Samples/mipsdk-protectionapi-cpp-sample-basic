@@ -32,6 +32,7 @@
 #include <memory>
 #include <string>
 
+#include "mip/mip_context.h"
 #include "mip/common_types.h"
 #include "mip/protection/protection_profile.h"
 #include "mip/protection/protection_engine.h"
@@ -77,6 +78,7 @@ namespace sample {
 			std::shared_ptr<mip::ProtectionDescriptor> CreateProtectionDescriptor(const ProtectionOptions protectionOptions);
 
 			std::shared_ptr<sample::auth::AuthDelegateImpl> mAuthDelegate;			// AuthDelegateImpl object that will be used throughout the sample to store auth details.
+			std::shared_ptr<mip::MipContext> mMipContext;
 			std::shared_ptr<mip::ProtectionProfile> mProfile;								// mip::FileProfile object to store/load state information 
 			std::shared_ptr<mip::ProtectionEngine> mEngine;								// mip::FileEngine object to handle user-specific actions. 
 			std::shared_ptr<sample::consent::ConsentDelegateImpl> mConsentDelegate; // Implements consent flow. Review consent_delegate_impl.cpp for implementation details.						
