@@ -88,6 +88,7 @@ namespace sample {
 				mAppInfo,
 				"mip_data",
 				mip::LogLevel::Trace,
+				false,
 				nullptr /*loggerDelegateOverride*/,
 				nullptr /*telemetryOverride*/
 			);
