@@ -54,19 +54,23 @@ int main()
 	string plaintext;
 	string ciphertext;
 	string decryptedText;
+	std::string clientId = "YOUR CLIENT ID";
+	std::string appName = "YOUR APP NAME";
+	std::string appVersion = "YOUR APP VERSION";
+	std::string userName = "YOUR TEST USER";
+	std::string password = "YOUR TEST USER PASSWORD";
+
 
 	// Create the mip::ApplicationInfo object. 
 	// Client ID should be the client ID registered in Azure AD for your custom application.
 	// Friendly Name should be the name of the application as it should appear in reports.
-	// Version should should be version number of the application you're writing. This data will show in logs. 
-	mip::ApplicationInfo appInfo{ "YOUR CLIENT ID HERE", "YOUR APP NAME HERE", "YOUR APP VERSION" };
-	
-	// All actions for this tutorial project are implemented in samples::file::Action
-	// Source files are Action.h/cpp.
-	// "File" was chosen because this example is specifically for the MIP SDK File API. 
+	mip::ApplicationInfo appInfo{ clientId, appName, appVersion };
+
+	// All actions for this tutorial project are implemented in samples::policy::Action
+	// Source files are Action.h/cpp.	
 	// Action's constructor takes in the mip::ApplicationInfo object and uses the client ID for auth.
 	// Username and password are required in this sample as the oauth2 token is obtained via Python script and basic auth.
-	Action action = Action(appInfo, "YOUR TEST USER NAME","YOUR TEST USER PASSWORD");
+	Action action = Action(appInfo, userName, password);
 
 	while (true)
 	{
