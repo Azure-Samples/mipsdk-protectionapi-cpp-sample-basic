@@ -1,10 +1,12 @@
 ---
-services: microsoft-information-protection
-platforms: cpp
-author: tommoser
-level: 300
-client: Desktop
-service: Microsoft Information Protection
+page_type: sample
+languages:
+- cpp
+- python
+products:
+- azure
+description: "This application demonstrates using the MIP SDK Protection API to list available templates, then to encrypt/decrypt a string with that template."
+urlFragment: mipsdk-protectionapi-cpp-sample-basic 
 ---
 
 # MipSdk-ProtectionApi-Cpp-Sample-Basic
