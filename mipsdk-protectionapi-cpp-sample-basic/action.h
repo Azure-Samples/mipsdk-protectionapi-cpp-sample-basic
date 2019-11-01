@@ -48,13 +48,13 @@ namespace sample {
 	namespace file {	
 
 		struct ProtectionOptions {
-			bool isAdHoc;
+			bool isAdHoc = false;
 			std::vector<std::string> owner;
 			std::vector<std::string> users;
 			std::vector<std::string> rights;
 			std::vector<std::string> roles;
 			std::string templateId;
-			bool useBufferApi;
+			bool useBufferApi = false;
 		};
 
 		class Action {
@@ -66,15 +66,15 @@ namespace sample {
 			~Action();
 
 			void ListTemplates();							// List all labels associated engine loaded for user						
-			void ProtectString(const std::string& plaintext, std::string& ciphertext, const std::vector<uint8_t>& serializedLicense);
+			std::vector<uint8_t> ProtectString(const std::string& plaintext, std::string& ciphertext, const std::string& templateId);
 			void DecryptString(std::string& plaintext, const std::string& ciphertext, const std::vector<uint8_t>& serializedLicense);
-			std::vector<uint8_t> GetPublishingLicense(const std::string& templateId);
+			void ShowProtection(const std::vector<uint8_t>& serializedLicense);
 
 		private:
 			void AddNewProtectionProfile();					// Private function for adding and loading mip::FileProfile
 			void AddNewProtectionEngine();					// Private function for adding/loading mip::FileEngine for specified user
-			std::shared_ptr<mip::ProtectionHandler> CreateProtectionHandler(const ProtectionOptions protectionOptions); // Creates mip::FileHandler for specified file
-			shared_ptr<mip::ProtectionHandler> CreateProtectionHandler(const vector<uint8_t>& serializedPublishingLicense);
+			std::shared_ptr<mip::ProtectionHandler> CreateProtectionHandlerForPublishing(const std::shared_ptr<mip::ProtectionDescriptor>& descriptor); // Creates mip::FileHandler for specified file
+			shared_ptr<mip::ProtectionHandler> CreateProtectionHandlerForConsumption(const vector<uint8_t>& serializedPublishingLicense);
 			std::shared_ptr<mip::ProtectionDescriptor> CreateProtectionDescriptor(const ProtectionOptions protectionOptions);
 
 			std::shared_ptr<sample::auth::AuthDelegateImpl> mAuthDelegate;			// AuthDelegateImpl object that will be used throughout the sample to store auth details.
