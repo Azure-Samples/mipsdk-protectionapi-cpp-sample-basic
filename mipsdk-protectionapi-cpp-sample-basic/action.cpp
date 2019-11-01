@@ -27,7 +27,6 @@
 
 #include "action.h"
 
-#include "mip/mip_init.h"
 #include "mip/common_types.h"
 #include "mip/protection/protection_profile.h"
 #include "mip/protection/protection_engine.h"
