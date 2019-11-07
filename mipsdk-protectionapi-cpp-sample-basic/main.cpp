@@ -91,8 +91,8 @@ int main()
 			return 0;
 		}
 
-		// Generate a new publishing license.
-		auto publishingLicense = action.GetPublishingLicense(templateToApply);
+		// Generate a new protection descriptor and store publishing license
+		
 
 		// Prompt the user to enter a file. A labeled copy of this file will be created.
 		cout << "Enter some text to encrypt: ";
@@ -102,7 +102,7 @@ int main()
 		cout << "Applying Label ID " + templateToApply + " to: " << endl << plaintext << endl;
 
 		// Protect the input string using the previously generated PL.
-		action.ProtectString(plaintext, ciphertext, publishingLicense);
+		auto publishingLicense = action.ProtectString(plaintext, ciphertext, templateToApply);
 
 		cout << "Protected output: " << endl << ciphertext << endl;
 		cout << endl << "Decrypting string: " << endl << endl;

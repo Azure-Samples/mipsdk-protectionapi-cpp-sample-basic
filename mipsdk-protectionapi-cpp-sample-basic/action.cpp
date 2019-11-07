@@ -27,7 +27,6 @@
 
 #include "action.h"
 
-#include "mip/mip_init.h"
 #include "mip/common_types.h"
 #include "mip/protection/protection_profile.h"
 #include "mip/protection/protection_engine.h"
@@ -83,6 +82,11 @@ namespace sample {
 
 		void sample::file::Action::AddNewProtectionProfile()
 		{			
+			
+
+			auto telemetryConfig = std::make_shared<mip::TelemetryConfiguration>();										
+			telemetryConfig->isTelemetryOptedOut = true;
+					   
 			//Create MipContext
 			mMipContext = mip::MipContext::Create(
 				mAppInfo,
@@ -90,8 +94,9 @@ namespace sample {
 				mip::LogLevel::Trace,
 				false,
 				nullptr /*loggerDelegateOverride*/,
-				nullptr /*telemetryOverride*/
+				telemetryConfig /*telemetryOverride*/
 			);
+
 
 			// Initialize ProtectionProfileSettings using MipContext
 			ProtectionProfile::Settings profileSettings(mMipContext,
@@ -123,37 +128,32 @@ namespace sample {
 			mEngine = engineFuture.get();
 		}
 		
-		std::shared_ptr<mip::ProtectionHandler> Action::CreateProtectionHandler(const ProtectionOptions protectionOptions)
+		std::shared_ptr<mip::ProtectionHandler> Action::CreateProtectionHandlerForPublishing(const std::shared_ptr<mip::ProtectionDescriptor>& descriptor)
 		{
 			auto handlerPromise = std::make_shared<std::promise<std::shared_ptr<ProtectionHandler>>>();
 			auto handlerFuture = handlerPromise->get_future();
-			auto descriptor = CreateProtectionDescriptor(protectionOptions);
-			auto observer = std::make_shared<ProtectionHandlerObserverImpl>();
 
-			mEngine->CreateProtectionHandlerFromDescriptorAsync(descriptor,
-				mip::ProtectionHandlerCreationOptions::None,
-				observer,
-				handlerPromise);
+			auto handlerObserver = std::make_shared<ProtectionHandlerObserverImpl>();
 
+			mip::ProtectionHandler::PublishingSettings publishingSettings = mip::ProtectionHandler::PublishingSettings(descriptor);
+			mEngine->CreateProtectionHandlerForPublishingAsync(publishingSettings, handlerObserver, handlerPromise);
+			
 			return handlerFuture.get();
 		}
 
-		std::shared_ptr<mip::ProtectionHandler> Action::CreateProtectionHandler(const std::vector<uint8_t>& serializedPublishingLicense) {
+		std::shared_ptr<mip::ProtectionHandler> Action::CreateProtectionHandlerForConsumption(const std::vector<uint8_t>& serializedPublishingLicense) {
 			// Note: Applications can optionally require user consent to acquire a protection handler by implementing the
 			//  ConsentDelegate interfaces and passing the object when creating a ProtectionProfile
 
 			auto handlerPromise = std::make_shared<std::promise<std::shared_ptr<ProtectionHandler>>>();
 			auto handlerFuture = handlerPromise->get_future();
-			shared_ptr<ProtectionHandlerObserverImpl> handleObserver = std::make_shared<ProtectionHandlerObserverImpl>();
+			shared_ptr<ProtectionHandlerObserverImpl> handlerObserver = std::make_shared<ProtectionHandlerObserverImpl>();
 
+			mip::ProtectionHandler::ConsumptionSettings consumptionSettings = mip::ProtectionHandler::ConsumptionSettings(serializedPublishingLicense);
+			mEngine->CreateProtectionHandlerForConsumptionAsync(consumptionSettings, handlerObserver, handlerPromise);
 			
-
-			mEngine->CreateProtectionHandlerFromPublishingLicenseAsync(
-				serializedPublishingLicense,
-				mip::ProtectionHandlerCreationOptions::None,
-				handleObserver,
-				handlerPromise);
-			return handlerFuture.get();
+			auto h = handlerFuture.get();			
+			return h;
 		}
 	
 
@@ -161,7 +161,7 @@ namespace sample {
 		{
 			if (!protectionOptions.templateId.empty())
 			{
-				auto descriptorBuilder = mip::ProtectionDescriptorBuilder::CreateFromTemplate(protectionOptions.templateId);
+				auto descriptorBuilder = mip::ProtectionDescriptorBuilder::CreateFromTemplate(protectionOptions.templateId);				
 				return descriptorBuilder->Build();
 			}
 			return nullptr;
@@ -191,13 +191,18 @@ namespace sample {
 			}
 		}
 
-		void Action::ProtectString(const std::string& plaintext, std::string& ciphertext, const std::vector<uint8_t>& serializedLicense)
+		std::vector<uint8_t> Action::ProtectString(const std::string& plaintext, std::string& ciphertext, const std::string& templateId)
 		{
 			if (!mEngine) {
 				AddNewProtectionEngine();
 			}
 
-			auto handler = CreateProtectionHandler(serializedLicense);
+			ProtectionOptions protectionOptions;
+			protectionOptions.templateId = templateId;
+
+			auto descriptor = CreateProtectionDescriptor(protectionOptions);
+
+			auto handler = CreateProtectionHandlerForPublishing(descriptor);
 			std::vector<uint8_t> outputBuffer;
 			// std::vector<uint8_t> inputBuffer(static_cast<size_t>(plaintext.size()));
 			std::vector<uint8_t> inputBuffer(plaintext.begin(), plaintext.end());
@@ -213,6 +218,8 @@ namespace sample {
 			
 			std::string output(outputBuffer.begin(), outputBuffer.end());
 			ciphertext = output;
+
+			return handler->GetSerializedPublishingLicense();
 		}
 
 		void Action::DecryptString(std::string& plaintext, const std::string& ciphertext, const std::vector<uint8_t>& serializedLicense)
@@ -221,7 +228,7 @@ namespace sample {
 				AddNewProtectionEngine();
 			}
 
-			auto handler = CreateProtectionHandler(serializedLicense);
+			auto handler = CreateProtectionHandlerForConsumption(serializedLicense);
 			std::vector<uint8_t> outputBuffer(static_cast<size_t>(ciphertext.size()));
 
 				
@@ -239,19 +246,6 @@ namespace sample {
 						
 			std::string output(outputBuffer.begin(), outputBuffer.end());
 			plaintext = output;
-		}
-
-		std::vector<uint8_t> Action::GetPublishingLicense(const std::string& templateId)
-		{
-			if (!mEngine) {
-				AddNewProtectionEngine();
-			}
-
-			ProtectionOptions protectionOptions;
-			protectionOptions.templateId = templateId;
-			
-			auto handler = CreateProtectionHandler(protectionOptions);
-			return handler->GetSerializedPublishingLicense();
 		}
 	}
 }
