@@ -181,13 +181,13 @@ namespace sample {
 			// Create a context to pass to 'ProtectionEngine::GetTemplateListAsync'. That context will be forwarded to the
 			// corresponding ProtectionEngine::Observer methods. In this case, we use promises/futures as a simple way to detect 
 			// the async operation completes synchronously.
-			auto loadPromise = std::make_shared<std::promise<shared_ptr<vector<string>>>>();
-			std::future<std::shared_ptr<std::vector<std::string>>> loadFuture = loadPromise->get_future();
+			auto loadPromise = std::make_shared<std::promise<vector<shared_ptr<mip::TemplateDescriptor>>>>();
+			std::future<vector<shared_ptr<mip::TemplateDescriptor>>> loadFuture = loadPromise->get_future();
 			mEngine->GetTemplatesAsync(engineObserver, loadPromise);
 			auto templates = loadFuture.get();
 			
-			for (const auto& protectionTemplate: *templates) {
-				cout << "Id: " << protectionTemplate << endl;
+			for (const auto& protectionTemplate: templates) {
+				cout << "Name: " << protectionTemplate->GetName() << " : " << protectionTemplate->GetId() << endl;				
 			}
 		}
 

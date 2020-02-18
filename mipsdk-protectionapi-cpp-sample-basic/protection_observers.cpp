@@ -57,10 +57,10 @@ void ProtectionHandlerObserverImpl::OnCreateProtectionHandlerFailure(
 };
 
 void ProtectionEngineObserverImpl::OnGetTemplatesSuccess(
-	const shared_ptr<vector<string>>& templatesList,
+	const vector<shared_ptr<mip::TemplateDescriptor>>& templateDescriptors,
 	const shared_ptr<void>& context) {
-	auto loadPromise = static_cast<promise<shared_ptr<vector<string>>>*>(context.get());
-	loadPromise->set_value(templatesList);
+	auto loadPromise = static_cast<promise<vector<shared_ptr<mip::TemplateDescriptor>>>*>(context.get());	
+	loadPromise->set_value(templateDescriptors);
 };
 
 void ProtectionEngineObserverImpl::OnGetTemplatesFailure(const exception_ptr& Failure, const shared_ptr<void>& context) {
