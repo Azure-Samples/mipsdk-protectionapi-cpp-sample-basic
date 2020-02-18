@@ -59,8 +59,7 @@ public:
 class ProtectionEngineObserverImpl final : public mip::ProtectionEngine::Observer {
 public:
 	ProtectionEngineObserverImpl() { }
-
-	void OnGetTemplatesSuccess(const shared_ptr<vector<string>>& templatesList, const shared_ptr<void>& context) override;
+	void OnGetTemplatesSuccess(const vector<std::shared_ptr<mip::TemplateDescriptor>>& templateDescriptors, const shared_ptr<void>& context) override;
 	void OnGetTemplatesFailure(const exception_ptr& Failure, const shared_ptr<void>& context) override;
 };
 
