@@ -101,7 +101,6 @@ namespace sample {
 			// Initialize ProtectionProfileSettings using MipContext
 			ProtectionProfile::Settings profileSettings(mMipContext,
 				mip::CacheStorageType::OnDiskEncrypted,
-				mAuthDelegate,
 				std::make_shared<sample::consent::ConsentDelegateImpl>(),
 				std::make_shared<ProtectionProfileObserverImpl>()
 			);
@@ -120,7 +119,7 @@ namespace sample {
 			}
 		
 			// Set the engine identity to the provided username. This username is used for service discovery.
-			ProtectionEngine::Settings engineSettings(mip::Identity(mUsername), "");
+			ProtectionEngine::Settings engineSettings(mip::Identity(mUsername), mAuthDelegate, "");
 			
 			auto enginePromise = std::make_shared<std::promise<std::shared_ptr<ProtectionEngine>>>();
 			auto engineFuture = enginePromise->get_future();
