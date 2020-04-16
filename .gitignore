@@ -329,3 +329,4 @@ ASALocalRun/
 # MFractors (Xamarin productivity tool) working folder 
 .mfractor/
 /MipSdk-FileApi-Cpp-Sample-Basic/file_sample/mip
+/mip_data/
