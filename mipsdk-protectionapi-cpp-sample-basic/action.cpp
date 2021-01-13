@@ -81,12 +81,7 @@ namespace sample {
 		}
 
 		void sample::file::Action::AddNewProtectionProfile()
-		{			
-			
-
-			auto telemetryConfig = std::make_shared<mip::TelemetryConfiguration>();										
-			telemetryConfig->isTelemetryOptedOut = true;
-					   
+		{														   
 			//Create MipContext
 			mMipContext = mip::MipContext::Create(
 				mAppInfo,
@@ -94,7 +89,7 @@ namespace sample {
 				mip::LogLevel::Trace,
 				false,
 				nullptr /*loggerDelegateOverride*/,
-				telemetryConfig /*telemetryOverride*/
+				nullptr /*telemetryOverride*/
 			);
 
 
@@ -120,7 +115,7 @@ namespace sample {
 		
 			// Set the engine identity to the provided username. This username is used for service discovery.
 			ProtectionEngine::Settings engineSettings(mip::Identity(mUsername), mAuthDelegate, "");
-			
+
 			auto enginePromise = std::make_shared<std::promise<std::shared_ptr<ProtectionEngine>>>();
 			auto engineFuture = enginePromise->get_future();
 			mProfile->AddEngineAsync(engineSettings, enginePromise);
@@ -137,7 +132,9 @@ namespace sample {
 			mip::ProtectionHandler::PublishingSettings publishingSettings = mip::ProtectionHandler::PublishingSettings(descriptor);
 			mEngine->CreateProtectionHandlerForPublishingAsync(publishingSettings, handlerObserver, handlerPromise);
 			
-			return handlerFuture.get();
+			auto handler = handlerFuture.get();			
+			
+			return handler;
 		}
 
 		std::shared_ptr<mip::ProtectionHandler> Action::CreateProtectionHandlerForConsumption(const std::vector<uint8_t>& serializedPublishingLicense) {
@@ -151,7 +148,7 @@ namespace sample {
 			mip::ProtectionHandler::ConsumptionSettings consumptionSettings = mip::ProtectionHandler::ConsumptionSettings(serializedPublishingLicense);
 			mEngine->CreateProtectionHandlerForConsumptionAsync(consumptionSettings, handlerObserver, handlerPromise);
 			
-			auto h = handlerFuture.get();			
+			auto h = handlerFuture.get();						
 			return h;
 		}
 	
