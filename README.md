@@ -29,7 +29,8 @@ The application demonstrates the following:
 ### Prerequisites
 
 - Visual Studio 2015 or later with Visual C++ development features installed
-- Python 2.7 or greater installed and in the system path
+- Python 3.8 or greater installed and in the system path
+- MSAL module for Python is installed via `pip install msal`
 
 ### Sample Setup
 
