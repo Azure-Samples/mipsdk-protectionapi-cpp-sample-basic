@@ -60,7 +60,7 @@ using mip::ProtectionEngine;
 using mip::ProtectionHandler;
 
 namespace sample {
-	namespace file {
+	namespace protection {
 
 		// Constructor accepts mip::ApplicationInfo object and uses it to initialize AuthDelegateImpl.
 		// Specifically, AuthDelegateInfo uses mAppInfo.ApplicationId for AAD client_id value.		
@@ -77,20 +77,20 @@ namespace sample {
 		{
 			mEngine = nullptr;
 			mProfile = nullptr;
+			mMipContext->ShutDown();
 			mMipContext = nullptr;
 		}
 
-		void sample::file::Action::AddNewProtectionProfile()
-		{														   
-			//Create MipContext
-			mMipContext = mip::MipContext::Create(
-				mAppInfo,
+		void sample::protection::Action::AddNewProtectionProfile()
+		{							
+			// Initialize MipConfiguration
+			std::shared_ptr<mip::MipConfiguration> mipConfiguration = std::make_shared<mip::MipConfiguration>(mAppInfo,
 				"mip_data",
 				mip::LogLevel::Trace,
-				false,
-				nullptr /*loggerDelegateOverride*/,
-				nullptr /*telemetryOverride*/
-			);
+				false);
+
+			// Initialize MipContext. MipContext can be set to null at shutdown and will automatically release all resources.
+			mMipContext = mip::MipContext::Create(mipConfiguration);
 
 
 			// Initialize ProtectionProfileSettings using MipContext
@@ -115,11 +115,17 @@ namespace sample {
 		
 			// Set the engine identity to the provided username. This username is used for service discovery.
 			ProtectionEngine::Settings engineSettings(mip::Identity(mUsername), mAuthDelegate, "");
+			
+			// Set the engine Id to the username of the authenticated user. This will ensure that the same engine is loaded and the cache utilized properly. 
+			engineSettings.SetEngineId(mUsername);
 
 			auto enginePromise = std::make_shared<std::promise<std::shared_ptr<ProtectionEngine>>>();
 			auto engineFuture = enginePromise->get_future();
 			mProfile->AddEngineAsync(engineSettings, enginePromise);
-			mEngine = engineFuture.get();
+			mEngine = engineFuture.get();	
+
+			// Output the engine id to the console. 
+			cout << "Engine Id: " << mEngine->GetSettings().GetEngineId() << endl;
 		}
 		
 		std::shared_ptr<mip::ProtectionHandler> Action::CreateProtectionHandlerForPublishing(const std::shared_ptr<mip::ProtectionDescriptor>& descriptor)

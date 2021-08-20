@@ -45,7 +45,7 @@
 #include "consent_delegate_impl.h"
 
 namespace sample {
-	namespace file {	
+	namespace protection {	
 
 		struct ProtectionOptions {
 			bool isAdHoc = false;
