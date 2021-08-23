@@ -44,7 +44,7 @@ using std::cout;
 using std::cin;
 using std::endl;
 
-using sample::file::Action;
+using sample::protection::Action;
 
 int main()
 {
@@ -60,13 +60,13 @@ int main()
 
 	// Username and password are required in this sample as the oauth2 token is obtained via Python script and MSAL auth.
 	// DO NOT embed credentials for administrative or production accounts. 
-	std::string userName = "YOUR TEST USER NAME";
-	std::string password = "YOUR TEST PASSWORD";
+	std::string userName = "YOUR TEST USER ID";
+	std::string password = "YOUR TEST USER PASSWORD";
 
 	// Create the mip::ApplicationInfo object. 
 
 	// Friendly Name should be the name of the application as it should appear in reports.
-	mip::ApplicationInfo appInfo{ clientId,  "MIP SDK Protection Sample for C++", "1.9.0" };
+	mip::ApplicationInfo appInfo{ clientId,  "MIP SDK Protection Sample for C++", "1.10.0" };
 
 	// All actions for this tutorial project are implemented in samples::policy::Action
 	// Source files are Action.h/cpp.	
