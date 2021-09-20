@@ -32,9 +32,12 @@
 #include <functional>
 #include <memory>
 #include <string>
-
+#include <iostream>
 using std::string;
 using std::runtime_error;
+using std::cout;
+using std::cin;
+using std::endl;
 
 namespace sample {
 	namespace auth {
@@ -52,22 +55,24 @@ namespace sample {
 		// Resource and Authority are provided as part of the OAuth2Challenge object that is passed in by the SDK to the AuthDelegate.
 		string AcquireToken(
 			const string& username,
-			const string& password,
 			const string& clientId,
 			const string& resource,
 			const string& authority) {
 
-			string cmd = "python";
-			if (sample::utils::FileExists("auth.py"))
-				cmd += " auth.py -u ";
-			else if (sample::utils::FileExists("samples/auth/auth.py"))
-				cmd += " samples/auth/auth.py -u ";
-			else
-				throw runtime_error("Unable to find auth script.");
+			cout << "running python script to get token" << endl;
 
+			string cmd = "python";
+			if (sample::utils::FileExists("auth.py")) {
+				cmd += " auth.py -u ";
+			}
+			else if (sample::utils::FileExists("samples/auth/auth.py")) {
+                cmd += " samples/auth/auth.py -u ";
+			}
+			else {
+                throw runtime_error("Unable to find auth script.");
+			}
+			
 			cmd += username;
-			cmd += " -p ";
-			cmd += password;
 			cmd += " -a ";
 			cmd += authority;
 			cmd += " -r ";
@@ -78,6 +83,8 @@ namespace sample {
 			string result = sample::utils::Execute(cmd.c_str());
 			if (result.empty())
 				throw runtime_error("Failed to acquire token. Ensure Python is installed correctly.");
+
+			cout << "acquired token successfully" << endl;
 
 			return result;
 		}

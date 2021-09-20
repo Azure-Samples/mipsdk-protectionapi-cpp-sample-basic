@@ -44,11 +44,9 @@ namespace sample {
 
 		AuthDelegateImpl::AuthDelegateImpl(
 			const mip::ApplicationInfo& applicationInfo,
-			const std::string& username,
-			const std::string& password)
+			const std::string& username)
 			: mApplicationInfo(applicationInfo),
-			  mUserName(username),
-			  mPassword(password) {
+			  mUserName(username) {
 		}
 			
 		bool AuthDelegateImpl::AcquireOAuth2Token(
@@ -57,7 +55,7 @@ namespace sample {
 			OAuth2Token& token) {
 			
 			// call our AcquireToken function, passing in username, password, clientId, and getting the resource/authority from the OAuth2Challenge object
-			string accessToken = sample::auth::AcquireToken(mUserName, mPassword, mApplicationInfo.applicationId, challenge.GetResource(), challenge.GetAuthority());			
+			string accessToken = sample::auth::AcquireToken(mUserName, mApplicationInfo.applicationId, challenge.GetResource(), challenge.GetAuthority());			
 			token.SetAccessToken(accessToken);
 			return true;
 		}

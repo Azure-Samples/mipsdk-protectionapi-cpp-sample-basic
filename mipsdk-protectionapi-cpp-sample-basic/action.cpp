@@ -65,12 +65,10 @@ namespace sample {
 		// Constructor accepts mip::ApplicationInfo object and uses it to initialize AuthDelegateImpl.
 		// Specifically, AuthDelegateInfo uses mAppInfo.ApplicationId for AAD client_id value.		
 		Action::Action(const mip::ApplicationInfo appInfo,
-			const std::string& username,
-			const std::string& password)
+			const std::string& username)
 			: mAppInfo(appInfo),
-			mUsername(username),
-			mPassword(password) {
-			mAuthDelegate = std::make_shared<sample::auth::AuthDelegateImpl>(mAppInfo, mUsername, mPassword);
+			mUsername(username){
+			mAuthDelegate = std::make_shared<sample::auth::AuthDelegateImpl>(mAppInfo, mUsername);
 		}
 		
 		Action::~Action()

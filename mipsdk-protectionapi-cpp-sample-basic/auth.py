@@ -42,7 +42,6 @@ def main(argv):
     sys.exit(-1)
 
   username = ''
-  password = ''
   authority = ''
   resource = ''
 
@@ -54,8 +53,6 @@ def main(argv):
       sys.exit()
     elif option == '-u':
       username = arg
-    elif option == '-p':
-      password = arg
     elif option == '-a':
       authority = arg
     elif option == '-r':
@@ -63,7 +60,7 @@ def main(argv):
     elif option == '-c':
       clientId = arg
 
-  if username == '' or password == '' or authority == '' or resource == '' or clientId == '':
+  if username == '' or authority == '' or resource == '' or clientId == '':
     printUsage()
     sys.exit(-1)
 
@@ -81,10 +78,14 @@ def main(argv):
   else:
     resource += "/.default"
   
-  # *DO NOT* use username/password authentication in production system.
-  # Instead, consider auth code flow and using a browser to fetch the token.
-  result = app.acquire_token_by_username_password(username=username, password=password, scopes=[resource])  
-  print(result['access_token'])
+  # Firstly, check the cache to see if this end user has signed in before
+  accounts = app.get_accounts(username=username)
+  if accounts:
+    result = app.acquire_token_silent([resource], account=accounts[0])
 
+  if not result:
+    result = app.acquire_token_interactive(  # It automatically provides PKCE protection
+         scopes=[resource])
+  print(result['access_token'])
 if __name__ == '__main__':  
   main(sys.argv[1:])

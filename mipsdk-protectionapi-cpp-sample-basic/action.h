@@ -61,8 +61,7 @@ namespace sample {
 		public:
 
 			Action(const mip::ApplicationInfo appInfo,
-				const std::string& username,
-				const std::string& password);
+				const std::string& username);
 			~Action();
 
 			void ListTemplates();							// List all labels associated engine loaded for user						

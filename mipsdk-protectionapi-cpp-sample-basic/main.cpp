@@ -56,12 +56,11 @@ int main()
 	string decryptedText;
 	
 	// Client ID should be the client ID registered in Azure AD for your custom application.
-	std::string clientId = "YOUR CLIENT ID";
+	std::string clientId = "203f57c2-c9a8-4f70-a1f3-82068b05ebc2";
 
 	// Username and password are required in this sample as the oauth2 token is obtained via Python script and MSAL auth.
 	// DO NOT embed credentials for administrative or production accounts. 
-	std::string userName = "YOUR TEST USER ID";
-	std::string password = "YOUR TEST USER PASSWORD";
+	std::string userName = "Admin2@PIMDemo1.onmicrosoft.com";
 
 	// Create the mip::ApplicationInfo object. 
 
@@ -72,7 +71,7 @@ int main()
 	// Source files are Action.h/cpp.	
 	// Action's constructor takes in the mip::ApplicationInfo object and uses the client ID for auth.
 	// Username and password are required in this sample as the oauth2 token is obtained via Python script and basic auth.
-	Action action = Action(appInfo, userName, password);
+	Action action = Action(appInfo, userName);
 
 	while (true)
 	{
