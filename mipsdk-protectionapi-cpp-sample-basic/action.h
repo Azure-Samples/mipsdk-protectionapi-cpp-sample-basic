@@ -84,7 +84,6 @@ namespace sample {
 			mip::ApplicationInfo mAppInfo;											// mip::ApplicationInfo object for storing client_id and friendlyname
 
 			std::string mUsername; // store username to pass to auth delegate and to generate Identity
-			std::string mPassword; // store password to pass to auth delegate
 		};
 
 		
