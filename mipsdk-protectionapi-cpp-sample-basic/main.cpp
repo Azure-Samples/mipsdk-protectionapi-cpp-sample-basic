@@ -30,7 +30,7 @@
 #include <iostream>
 #include <memory>
 #include <sstream>
-
+#include <fstream>
 
 #include "action.h"
 #include "mip/common_types.h"
@@ -46,21 +46,20 @@ using std::endl;
 
 using sample::protection::Action;
 
+void write_vector_to_disk(std::string file_path, std::vector<uint8_t>& publishingLicense);
+std::vector<uint8_t> read_vector_from_disk(std::string file_path);
+void decryptString(sample::protection::Action& action);
+int encryptString(sample::protection::Action& action);
+void printVector(std::vector<uint8_t>& vector);
+
 int main()
 {
-	// local variables to store target file and the label that will be applied to the file.
-	
-	string templateToApply;
-	string plaintext;
-	string ciphertext;
-	string decryptedText;
-	
 	// Client ID should be the client ID registered in Azure AD for your custom application.
-	std::string clientId = "YOUR CLIENT ID";
+	std::string clientId = "";
 
 	// Username and password are required in this sample as the oauth2 token is obtained via Python script and MSAL auth.
 	// DO NOT embed credentials for administrative or production accounts. 
-	std::string userName = "YOUR TEST USER ID";
+	std::string userName = "";
 
 	// Create the mip::ApplicationInfo object. 
 
@@ -75,49 +74,103 @@ int main()
 
 	while (true)
 	{
-		templateToApply = "";
+		string choice;
 
-		// Call action.ListLabels() to display all available labels, then pause.
-		cout << "*** Template List: " << endl;
-		action.ListTemplates();		
+		cout << "Input 1 for encrypting a string and 2 for decrypting" << endl;
+		cout << endl << "Choice: ";
+		cin >> choice;
 
-		// Prompt the user to copy the Label ID from a displayed label. This will be stored
-		// then applied later to a file.		
-		cout << "Copy a template ID from above to apply to a new string or q to quit." << endl;
-		cout << endl << "Template ID: ";
-		cin >> templateToApply;
-
-		if (templateToApply == "q")
+		if (choice == "1")
 		{
-			return 0;
+			encryptString(action);
 		}
-
-		// Generate a new protection descriptor and store publishing license
-		
-
-		// Prompt the user to enter a file. A labeled copy of this file will be created.
-		cout << "Enter some text to encrypt: ";
-		std::getline(std::cin >> std::ws, plaintext);
-				
-		// Show action plan
-		cout << "Applying Label ID " + templateToApply + " to: " << endl << plaintext << endl;
-
-		// Protect the input string using the previously generated PL.
-		auto publishingLicense = action.ProtectString(plaintext, ciphertext, templateToApply);
-
-		cout << "Protected output: " << endl << ciphertext << endl;
-		cout << endl << "Decrypting string: " << endl << endl;
-
-		// Use the same PL to decrypt the ciphertext.
-		action.DecryptString(decryptedText, ciphertext, publishingLicense);
-
-		// Output decrypted content. Should match original input text.
-		cout << decryptedText << endl;
-
-		system("pause");
+		else if (choice == "2") {
+			decryptString(action);
+		}
 	}
 		
 	return 0;
 }
 
+inline void printVector(std::vector<uint8_t>& vector) {
+	std::string str(vector.begin(), vector.end());
+	cout << endl << "Print vector :" << endl << str << endl;
+}
+
+inline int encryptString(sample::protection::Action& action) {
+	// local variables to store target file and the label that will be applied to the file.
+	string templateToApply;
+	string plaintext;
+	string cipherText;
+	std::vector<uint8_t> publishingLicense;
+
+	templateToApply = "";
+
+	// Call action.ListLabels() to display all available labels, then pause.
+	cout << "*** Template List: " << endl;
+	action.ListTemplates();
+
+	// Prompt the user to copy the Label ID from a displayed label. This will be stored
+	// then applied later to a file.		
+	cout << "Copy a template ID from above to apply to a new string or q to quit." << endl;
+	cout << endl << "Template ID: ";
+	cin >> templateToApply;
+
+	if (templateToApply == "q")
+	{
+		return 0;
+	}
+
+	// Generate a new protection descriptor and store publishing license
+    // Prompt the user to enter a file. A labeled copy of this file will be created.
+	cout << "Enter some text to encrypt: ";
+	std::getline(std::cin >> std::ws, plaintext);
+
+	// Show action plan
+	cout << "Applying Label ID " + templateToApply + " to: " << endl << plaintext << endl;
+
+	publishingLicense = action.ProtectString(plaintext, cipherText, templateToApply);
+	cout << "Protected output: " << endl << cipherText << endl;
+
+	// save license in file
+	write_vector_to_disk("MIPLicense.txt", publishingLicense);
+
+	system("pause");
+}
+
+inline void decryptString(sample::protection::Action &action) {
+	string cipherText;
+	string decryptedText;
+	std::vector<uint8_t> publishingLicense;
+
+	publishingLicense = read_vector_from_disk("MIPLicense.txt");
+
+	cout << endl << "Enter text to decrypt: ";
+	cin >> cipherText;
+
+	cout << endl << "Decrypting string: " << endl << cipherText << endl;
+
+	// Use the same PL to decrypt the ciphertext.
+	action.DecryptString(decryptedText, cipherText, publishingLicense);
+
+	// Output decrypted content. Should match original input text.
+	cout << decryptedText << endl;
+
+	system("pause");
+}
+
+inline std::vector<uint8_t> read_vector_from_disk(std::string file_path)
+{
+	std::ifstream instream(file_path, std::ios::in | std::ios::binary);
+	std::vector<uint8_t> data((std::istreambuf_iterator<char>(instream)), std::istreambuf_iterator<char>());
+	return data;
+}
+
+inline void write_vector_to_disk(std::string file_path, std::vector<uint8_t> &publishingLicense)
+{
+	// save license in file
+	std::ofstream outfile(file_path, std::ios::out | std::ios::binary);
+	outfile.write((const char*)&publishingLicense[0], publishingLicense.size());
+	outfile.close();
+}
 
