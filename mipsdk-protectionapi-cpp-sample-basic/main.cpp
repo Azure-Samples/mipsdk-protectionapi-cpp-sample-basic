@@ -130,7 +130,7 @@ inline int encryptString(sample::protection::Action& action) {
 	cout << "Applying Label ID " + templateToApply + " to: " << endl << plaintext << endl;
 
 	publishingLicense = action.ProtectString(plaintext, cipherText, templateToApply);
-	cout << "Protected output: " << endl << cipherText << endl;
+	cout << "Protected output: " << endl << cipherText + "|End" << endl;
 
 	// save license in file
 	write_vector_to_disk("MIPLicense.txt", publishingLicense);
@@ -148,13 +148,11 @@ inline void decryptString(sample::protection::Action &action) {
 	cout << endl << "Enter text to decrypt: ";
 	cin >> cipherText;
 
-	cout << endl << "Decrypting string: " << endl << cipherText << endl;
-
 	// Use the same PL to decrypt the ciphertext.
 	action.DecryptString(decryptedText, cipherText, publishingLicense);
 
 	// Output decrypted content. Should match original input text.
-	cout << decryptedText << endl;
+	cout << endl << "Decrypted string: " << decryptedText << endl;
 
 	system("pause");
 }
@@ -163,11 +161,15 @@ inline std::vector<uint8_t> read_vector_from_disk(std::string file_path)
 {
 	std::ifstream instream(file_path, std::ios::in | std::ios::binary);
 	std::vector<uint8_t> data((std::istreambuf_iterator<char>(instream)), std::istreambuf_iterator<char>());
+	instream.close();
 	return data;
 }
 
 inline void write_vector_to_disk(std::string file_path, std::vector<uint8_t> &publishingLicense)
 {
+	// remove previous file
+	std::remove((const char*) &file_path);
+
 	// save license in file
 	std::ofstream outfile(file_path, std::ios::out | std::ios::binary);
 	outfile.write((const char*)&publishingLicense[0], publishingLicense.size());

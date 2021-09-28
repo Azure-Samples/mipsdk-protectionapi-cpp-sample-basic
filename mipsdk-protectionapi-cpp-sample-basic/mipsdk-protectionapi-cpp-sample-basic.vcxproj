@@ -173,6 +173,7 @@
     <ClInclude Include="utils.h" />
   </ItemGroup>
   <ItemGroup>
+    <None Include=".gitignore" />
     <None Include="auth.py" />
     <None Include="packages.config" />
   </ItemGroup>
