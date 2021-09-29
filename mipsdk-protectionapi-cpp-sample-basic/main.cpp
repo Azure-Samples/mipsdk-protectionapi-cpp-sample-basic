@@ -55,11 +55,11 @@ void printVector(std::vector<uint8_t>& vector);
 int main()
 {
 	// Client ID should be the client ID registered in Azure AD for your custom application.
-	std::string clientId = "";
+	std::string clientId = "203f57c2-c9a8-4f70-a1f3-82068b05ebc2";
 
 	// Username and password are required in this sample as the oauth2 token is obtained via Python script and MSAL auth.
 	// DO NOT embed credentials for administrative or production accounts. 
-	std::string userName = "";
+	std::string userName = "Admin2@PIMDemo1.onmicrosoft.com";
 
 	// Create the mip::ApplicationInfo object. 
 
@@ -130,7 +130,7 @@ inline int encryptString(sample::protection::Action& action) {
 	cout << "Applying Label ID " + templateToApply + " to: " << endl << plaintext << endl;
 
 	publishingLicense = action.ProtectString(plaintext, cipherText, templateToApply);
-	cout << "Protected output: " << endl << cipherText + "|End" << endl;
+	cout << "Protected output: " << endl << "Start|" << cipherText << "|End" << endl;
 
 	// save license in file
 	write_vector_to_disk("MIPLicense.txt", publishingLicense);
