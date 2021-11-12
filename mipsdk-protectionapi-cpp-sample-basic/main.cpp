@@ -66,7 +66,7 @@ int main()
 	// Create the mip::ApplicationInfo object. 
 
 	// Friendly Name should be the name of the application as it should appear in reports.
-	mip::ApplicationInfo appInfo{ clientId,  "MIP SDK Protection Sample for C++", "1.10.0" };
+	mip::ApplicationInfo appInfo{ clientId,  "MIP SDK Protection Sample for C++", "1.11.0" };
 
 	// All actions for this tutorial project are implemented in samples::policy::Action
 	// Source files are Action.h/cpp.	
