@@ -55,7 +55,7 @@ int main()
 	string ciphertext;
 	string decryptedText;
 	
-	// Client ID should be the client ID registered in Azure AD for your custom application.
+	// Client ID should be the client ID registered in Microsoft Entra ID for your custom application.
 	std::string clientId = "YOUR CLIENT ID";
 
 	// Username is used as identity and a login hint for browser-based sign-in.

@@ -233,12 +233,8 @@ string AcquireToken(
     const string& clientId,
     const string& resource,
     const string& authority) {
-  string authScriptPath;
-  if (sample::utils::FileExists("auth.py"))
-    authScriptPath = "auth.py";
-  else if (sample::utils::FileExists("samples/auth/auth.py"))
-    authScriptPath = "samples/auth/auth.py";
-  else
+  const string authScriptPath = "auth.py";
+  if (!sample::utils::FileExists(authScriptPath.c_str()))
     throw runtime_error("Unable to find auth script.");
 
   std::vector<string> args = {
