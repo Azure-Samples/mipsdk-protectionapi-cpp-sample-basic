@@ -22,69 +22,92 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 #
-# make sure to run pip install adal, first. 
-# for non-windows setup, review https://github.com/AzureAD/azure-activedirectory-library-for-python/wiki/ADAL-basics
 
 import getopt
 import sys
-import json
-import re
+
 from msal import PublicClientApplication
 
-def printUsage():
-  print('auth.py -u <username> -p <password> -a <authority> -r <resource> -c <clientId>')
+
+def print_usage():
+    print("auth.py -u <username> -a <authority> -r <resource> -c <clientId>")
+
+
+def normalize_authority(authority):
+    # ONLY FOR DEMO PURPOSES AND MSAL FOR PYTHON
+    # This shouldn't be required when using proper auth flows in production.
+    if authority.find("common") > 1:
+        authority = authority.split("/common")[0] + "/organizations"
+    return authority
+
+
+def normalize_scope(resource):
+    if resource.endswith("/"):
+        return resource + ".default"
+    return resource + "/.default"
+
+
+def acquire_access_token(app, username, scope):
+    accounts = app.get_accounts(username=username)
+    for account in accounts:
+        silent_result = app.acquire_token_silent(scopes=[scope], account=account)
+        if silent_result and "access_token" in silent_result:
+            return silent_result["access_token"], None
+
+    interactive_result = app.acquire_token_interactive(scopes=[scope], login_hint=username)
+    if interactive_result and "access_token" in interactive_result:
+        return interactive_result["access_token"], None
+
+    if interactive_result:
+        if "error_description" in interactive_result:
+            return None, interactive_result["error_description"]
+        if "error" in interactive_result:
+            return None, interactive_result["error"]
+
+    return None, "Unknown authentication failure."
+
 
 def main(argv):
-  try:
-    options, args = getopt.getopt(argv, 'hu:p:a:r:c:')
-  except getopt.GetoptError:
-    printUsage()
+    try:
+        options, _ = getopt.getopt(argv, "hu:a:r:c:")
+    except getopt.GetoptError:
+        print_usage()
+        sys.exit(-1)
+
+    username = ""
+    authority = ""
+    resource = ""
+    client_id = ""
+
+    for option, arg in options:
+        if option == "-h":
+            print_usage()
+            sys.exit()
+        if option == "-u":
+            username = arg
+        elif option == "-a":
+            authority = arg
+        elif option == "-r":
+            resource = arg
+        elif option == "-c":
+            client_id = arg
+
+    if username == "" or authority == "" or resource == "" or client_id == "":
+        print_usage()
+        sys.exit(-1)
+
+    authority = normalize_authority(authority)
+    scope = normalize_scope(resource)
+    app = PublicClientApplication(client_id=client_id, authority=authority)
+
+    access_token, error = acquire_access_token(app, username, scope)
+    if access_token:
+        print(access_token)
+        return
+
+    print(error, file=sys.stderr)
     sys.exit(-1)
 
-  username = ''
-  password = ''
-  authority = ''
-  resource = ''
 
-  clientId = ''
-    
-  for option, arg in options:
-    if option == '-h':
-      printUsage()
-      sys.exit()
-    elif option == '-u':
-      username = arg
-    elif option == '-p':
-      password = arg
-    elif option == '-a':
-      authority = arg
-    elif option == '-r':
-      resource = arg
-    elif option == '-c':
-      clientId = arg
-
-  if username == '' or password == '' or authority == '' or resource == '' or clientId == '':
-    printUsage()
-    sys.exit(-1)
-
-  # ONLY FOR DEMO PURPOSES AND MSAL FOR PYTHON
-  # This shouldn't be required when using proper auth flows in production.  
-  if authority.find('common') > 1:
-    authority = authority.split('/common')[0] + "/organizations"
-   
-  app = PublicClientApplication(client_id=clientId, authority=authority)  
-  
-  result = None  
-
-  if resource.endswith('/'):
-    resource += ".default"    
-  else:
-    resource += "/.default"
-  
-  # *DO NOT* use username/password authentication in production system.
-  # Instead, consider auth code flow and using a browser to fetch the token.
-  result = app.acquire_token_by_username_password(username=username, password=password, scopes=[resource])  
-  print(result['access_token'])
-
-if __name__ == '__main__':  
-  main(sys.argv[1:])
+if __name__ == "__main__":
+    main(sys.argv[1:])

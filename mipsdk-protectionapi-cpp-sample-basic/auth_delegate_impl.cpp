@@ -44,20 +44,19 @@ namespace sample {
 
 		AuthDelegateImpl::AuthDelegateImpl(
 			const mip::ApplicationInfo& applicationInfo,
-			const std::string& username,
-			const std::string& password)
+			const std::string& username)
 			: mApplicationInfo(applicationInfo),
-			  mUserName(username),
-			  mPassword(password) {
+			  mUserName(username) {
 		}
 			
 		bool AuthDelegateImpl::AcquireOAuth2Token(
 			const mip::Identity& /*identity*/,
 			const OAuth2Challenge& challenge,
+			const std::shared_ptr<void>& /*context*/,
 			OAuth2Token& token) {
 			
-			// call our AcquireToken function, passing in username, password, clientId, and getting the resource/authority from the OAuth2Challenge object
-			string accessToken = sample::auth::AcquireToken(mUserName, mPassword, mApplicationInfo.applicationId, challenge.GetResource(), challenge.GetAuthority());			
+			// Call token acquisition, using username as login hint and challenge resource/authority from the SDK.
+			string accessToken = sample::auth::AcquireToken(mUserName, mApplicationInfo.applicationId, challenge.GetResource(), challenge.GetAuthority());
 			token.SetAccessToken(accessToken);
 			return true;
 		}

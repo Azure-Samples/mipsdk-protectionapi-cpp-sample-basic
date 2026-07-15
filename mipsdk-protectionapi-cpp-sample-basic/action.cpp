@@ -32,7 +32,7 @@
 #include "mip/protection/protection_engine.h"
 #include "mip/protection/protection_handler.h"
 #include "mip/protection_descriptor.h"
-#include "mip/protection/protection_descriptor_builder.h"
+#include "mip/protection_descriptor_builder.h"
 #include "mip/protection/roles.h"
 #include "mip/protection/rights.h"
 
@@ -65,12 +65,10 @@ namespace sample {
 		// Constructor accepts mip::ApplicationInfo object and uses it to initialize AuthDelegateImpl.
 		// Specifically, AuthDelegateInfo uses mAppInfo.ApplicationId for AAD client_id value.		
 		Action::Action(const mip::ApplicationInfo appInfo,
-			const std::string& username,
-			const std::string& password)
+			const std::string& username)
 			: mAppInfo(appInfo),
-			mUsername(username),
-			mPassword(password) {
-			mAuthDelegate = std::make_shared<sample::auth::AuthDelegateImpl>(mAppInfo, mUsername, mPassword);
+			mUsername(username) {
+			mAuthDelegate = std::make_shared<sample::auth::AuthDelegateImpl>(mAppInfo, mUsername);
 		}
 		
 		Action::~Action()
@@ -87,7 +85,8 @@ namespace sample {
 			std::shared_ptr<mip::MipConfiguration> mipConfiguration = std::make_shared<mip::MipConfiguration>(mAppInfo,
 				"mip_data",
 				mip::LogLevel::Trace,
-				false);
+				false,
+				mip::CacheStorageType::OnDiskEncrypted);
 
 			// Initialize MipContext. MipContext can be set to null at shutdown and will automatically release all resources.
 			mMipContext = mip::MipContext::Create(mipConfiguration);

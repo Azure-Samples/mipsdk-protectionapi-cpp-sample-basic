@@ -40,7 +40,7 @@ The application demonstrates the following:
 1. Launch the project by double-clicking **MipSdk-ProtectionApi-Cpp-Sample-Basic.sln**
 1. When the project starts, set the project type to **x64**
 1. Right click the project in Visual Studio and select **Manage NuGet Packages**
-1. Browse for *Microsoft.InformationProtection.Protection* and install.
+1. Install *Microsoft.InformationProtection.Protection* **1.18.124** (or latest 1.18.x).
 1. In Visual Studio, click the **Build** menu, then click **Build**. The application should compile at this point, but will crash if run.
 1. Continue to the steps below to configure the Azure AD App Registration and update the sample code.
 
@@ -80,17 +80,15 @@ The **Application registration** screen should now be displaying your new applic
    > This is required only for the MIP SDK sample apps using MSAL for Python.
 6. Select **configure** and be sure to save and changes if required. 
 
-### Update Client ID, Username, and Password
+### Update Client ID and Username
 
 1. Open up **main.cpp**.
 2. Replace **YOUR CLIENT ID HERE** with the client ID copied from the AAD App Registration.
-3. Find the tokens for **YOUR USERNAME HERE** and **YOUR PASSWORD HERE** and insert test user credentials. 
-
-> DO NOT hard code a production username and password.
+3. Find the token for **YOUR TEST USER ID** and insert a test user identifier. This value is used as the engine identity and as an MSAL login hint.
 
 ## Run the Sample
 
-Press F5 to run the sample. The console application will start and after a brief moment displays the labels available for the user.
+Press F5 to run the sample. The console application will start, then prompt for browser-based sign-in when a cached token is not available.
 
 - Copy a template ID to the clipboard.
 - Paste the template in to the input prompt.
@@ -100,7 +98,10 @@ The application will obtain a publishing license, use it to encrypt the string, 
 
 ## Troubleshooting
 
-If the application fails to authenticate, ensure that python.exe is in the system path and that the version is Python 2.7. Alternatively, updated line 61 in auth.cpp to point to the exact path of the executable.
+If the application fails to authenticate, ensure that:
+- python.exe is in the system path and is Python 3.8 or later.
+- the MSAL Python package is installed (`pip install msal`).
+- the app registration is configured as a public client with the native redirect URI shown above.
 
 
 ## Resources
