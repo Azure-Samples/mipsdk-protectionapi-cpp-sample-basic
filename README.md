@@ -2,7 +2,7 @@
 page_type: sample
 languages:
 - cpp
-- python
+- csharp
 products:
 - azure
 description: "This application demonstrates using the MIP SDK Protection API to list available templates, then to encrypt/decrypt a string with that template."
@@ -29,15 +29,13 @@ The application demonstrates the following:
 ### Prerequisites
 
 - Visual Studio 2022 or later with Visual C++ development features installed
-- Python 3.8 or greater installed and in the system path
-- MSAL module for Python is installed at the required version via `pip install -r requirements.txt`
+- .NET 8 runtime and a .NET 8-compatible SDK installed
 
 ### Sample Setup
 
 > **Project folder** refers to the **MipSdk-ProtectionApi-Cpp-Sample-Basic\MipSdk-ProtectionApi-Cpp-Sample-Basic** directory in the folder where you cloned the repository.
 
 1. From a command prompt, run: **git clone https://github.com/Azure-Samples/MipSdk-ProtectionApi-Cpp-Sample-Basic**
-1. Install Python dependencies from the repo root: **pip install -r requirements.txt**
 1. Launch the project by double-clicking **MipSdk-ProtectionApi-Cpp-Sample-Basic.sln**
 1. When the project starts, set the project type to **x64**
 1. Right click the project in Visual Studio and select **Manage NuGet Packages**
@@ -77,9 +75,9 @@ The **Application registration** screen should now be displaying your new applic
 2. Select **Add a platform**.
 3. Select **Mobile and desktop applications**
 4. Add the default native client redirect URI **http://localhost**.
-5. Under **Advanced settings** set **Treat as a public client** to **yes**.
-   > This is required only for the MIP SDK sample apps using MSAL for Python.
-6. Select **configure** and be sure to save and changes if required. 
+5. Under **Settings** set **Allow public client flows** to **Enabled**.
+   > This is required for this native public-client sample.
+6. Click **Save**.
 
 ### Update Client ID and Username
 
@@ -91,6 +89,10 @@ The **Application registration** screen should now be displaying your new applic
 
 Press F5 to run the sample. The console application will start, then prompt for browser-based sign-in when a cached token is not available.
 
+Authentication runs in-process through `MipAuth.Managed`, a framework-dependent .NET 8 class library using MSAL.NET. The native executable hosts one .NET runtime through the official `nethost`/`hostfxr` APIs and loads `MipAuth.Managed.dll` from the executable directory. A normal solution build copies the managed assembly, runtime configuration, dependency manifest, and managed dependencies beside the native executable.
+
+The authentication component validates the authority and Azure Rights Management resource, normalizes the resource to its `.default` scope, tries a username-matched cached account silently, and falls back to system-browser interactive sign-in. Conditional-access claims from the MIP SDK challenge are forwarded to both MSAL requests.
+
 - Copy a template ID to the clipboard.
 - Paste the template in to the input prompt.
 - Enter a plaintext string.
@@ -100,9 +102,16 @@ The application will obtain a publishing license, use it to encrypt the string, 
 ## Troubleshooting
 
 If the application fails to authenticate, ensure that:
-- python.exe is in the system path and is Python 3.8 or later.
-- the MSAL Python package is installed at the required version (`pip install -r requirements.txt`).
+- a supported .NET 8 x64 runtime is installed.
+- `MipAuth.Managed.dll`, `MipAuth.Managed.runtimeconfig.json`, and `MipAuth.Managed.deps.json` are beside the built executable.
 - the app registration is configured as a public client with the native redirect URI shown above.
+
+To validate the managed code and native host without signing in:
+
+```powershell
+dotnet test .\MipAuth.Managed.Tests\MipAuth.Managed.Tests.csproj -c Release
+.\x64\Release\mipsdk-protectionapi-cpp-sample-basic.exe --auth-host-smoke
+```
 
 
 ## Resources

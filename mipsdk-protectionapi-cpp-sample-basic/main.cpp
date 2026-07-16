@@ -33,6 +33,7 @@
 
 
 #include "action.h"
+#include "auth.h"
 #include "mip/common_types.h"
 #include "utils.h"
 
@@ -46,8 +47,20 @@ using std::endl;
 
 using sample::protection::Action;
 
-int main()
+int RunSample(int argc, char* argv[])
 {
+	if (argc == 2 && std::string(argv[1]) == "--auth-host-smoke")
+	{
+		try
+		{
+			return sample::auth::ValidateManagedHost() ? 0 : 1;
+		}
+		catch (const std::exception&)
+		{
+			return 1;
+		}
+	}
+
 	// local variables to store target file and the label that will be applied to the file.
 	
 	string templateToApply;
@@ -116,4 +129,22 @@ int main()
 	}
 		
 	return 0;
+}
+
+int main(int argc, char* argv[])
+{
+	try
+	{
+		return RunSample(argc, argv);
+	}
+	catch (const std::exception& error)
+	{
+		std::cerr << "Sample failed: " << error.what() << std::endl;
+		return 1;
+	}
+	catch (...)
+	{
+		std::cerr << "Sample failed." << std::endl;
+		return 1;
+	}
 }

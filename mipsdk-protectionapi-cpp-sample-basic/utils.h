@@ -30,7 +30,6 @@
 
 namespace sample {
 	namespace utils {
-		std::string Execute(const char* cmd);
 		bool FileExists(const char* path);
 		std::string GetFileName(const std::string& filePath);
 		std::string GetFileExtension(const std::string& filePath);

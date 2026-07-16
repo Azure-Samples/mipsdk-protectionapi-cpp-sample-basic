@@ -1,4 +1,4 @@
-﻿/**
+/**
 *
 * Copyright (c) Microsoft Corporation.
 * All rights reserved.
@@ -26,231 +26,282 @@
 */
 
 #include "auth.h"
-#include "utils.h"
 
-#include <array>
-#include <fstream>
-#include <functional>
-#include <memory>
-#include <sstream>
+#include <coreclr_delegates.h>
+#include <hostfxr.h>
+#include <nethost.h>
+#define NOMINMAX
+#include <windows.h>
+
+#include <cstdint>
+#include <filesystem>
+#include <limits>
+#include <stdexcept>
 #include <string>
 #include <vector>
-
-#if defined(_WIN32) || defined(_WIN64)
-#include <windows.h>
-#else
-#include <sys/types.h>
-#include <sys/wait.h>
-#include <unistd.h>
-#endif
 
 using std::runtime_error;
 using std::string;
 
 namespace {
 
-string TrimOutput(string output) {
-  while (!output.empty() && (output.back() == '\r' || output.back() == '\n' || output.back() == ' ' || output.back() == '\t')) {
-    output.pop_back();
-  }
-  return output;
-}
+constexpr uint32_t kRequestVersion = 1;
+constexpr int32_t kMinimumBufferSize = 64 * 1024;
+constexpr int32_t kInvalidAuthority = 2;
 
-#if defined(_WIN32) || defined(_WIN64)
-string QuoteWindowsArgument(const string& arg) {
-  if (arg.find_first_of(" \t\"") == string::npos) {
-    return arg;
-  }
+struct AuthRequest {
+  uint32_t version;
+  uint32_t structSize;
 
-  string quoted = "\"";
-  size_t backslashCount = 0;
-  for (char c : arg) {
-    if (c == '\\') {
-      ++backslashCount;
-    } else if (c == '"') {
-      quoted.append(backslashCount * 2 + 1, '\\');
-      quoted.push_back('"');
-      backslashCount = 0;
-    } else {
-      quoted.append(backslashCount, '\\');
-      backslashCount = 0;
-      quoted.push_back(c);
+  const char* username;
+  int32_t usernameLength;
+  int32_t usernameReserved;
+
+  const char* clientId;
+  int32_t clientIdLength;
+  int32_t clientIdReserved;
+
+  const char* authority;
+  int32_t authorityLength;
+  int32_t authorityReserved;
+
+  const char* resource;
+  int32_t resourceLength;
+  int32_t resourceReserved;
+
+  const char* claims;
+  int32_t claimsLength;
+  int32_t claimsReserved;
+
+  char* tokenBuffer;
+  int32_t tokenBufferCapacity;
+  int32_t tokenLength;
+
+  char* errorBuffer;
+  int32_t errorBufferCapacity;
+  int32_t errorLength;
+};
+
+static_assert(sizeof(void*) == 8, "The managed authentication host requires x64.");
+static_assert(sizeof(AuthRequest) == 120, "The managed authentication ABI layout changed.");
+
+using acquire_token_fn = int(CORECLR_DELEGATE_CALLTYPE*)(void*, int32_t);
+
+std::filesystem::path GetExecutableDirectory() {
+  std::vector<wchar_t> buffer(MAX_PATH);
+  while (true) {
+    DWORD length = GetModuleFileNameW(
+        nullptr,
+        buffer.data(),
+        static_cast<DWORD>(buffer.size()));
+    if (length == 0) {
+      throw runtime_error("Managed authentication host is unavailable.");
     }
-  }
-
-  quoted.append(backslashCount * 2, '\\');
-  quoted.push_back('"');
-  return quoted;
-}
-
-string ExecuteProcess(const std::vector<string>& args) {
-  if (args.empty()) {
-    throw runtime_error("No process arguments were provided.");
-  }
-
-  SECURITY_ATTRIBUTES securityAttributes{};
-  securityAttributes.nLength = sizeof(SECURITY_ATTRIBUTES);
-  securityAttributes.bInheritHandle = TRUE;
-
-  HANDLE readHandle = nullptr;
-  HANDLE writeHandle = nullptr;
-  if (!CreatePipe(&readHandle, &writeHandle, &securityAttributes, 0)) {
-    throw runtime_error("Failed to create process output pipe.");
-  }
-  if (!SetHandleInformation(readHandle, HANDLE_FLAG_INHERIT, 0)) {
-    CloseHandle(readHandle);
-    CloseHandle(writeHandle);
-    throw runtime_error("Failed to configure process output pipe.");
-  }
-
-  STARTUPINFOA startupInfo{};
-  startupInfo.cb = sizeof(STARTUPINFOA);
-  startupInfo.dwFlags = STARTF_USESTDHANDLES;
-  startupInfo.hStdOutput = writeHandle;
-  startupInfo.hStdError = writeHandle;
-  startupInfo.hStdInput = GetStdHandle(STD_INPUT_HANDLE);
-
-  PROCESS_INFORMATION processInfo{};
-
-  std::ostringstream commandLine;
-  for (size_t index = 0; index < args.size(); ++index) {
-    if (index != 0) {
-      commandLine << ' ';
+    if (length < buffer.size() - 1) {
+      return std::filesystem::path(
+          std::wstring(buffer.data(), length)).parent_path();
     }
-    commandLine << QuoteWindowsArgument(args[index]);
-  }
-  string commandLineString = commandLine.str();
-
-  BOOL created = CreateProcessA(
-      nullptr,
-      &commandLineString[0],
-      nullptr,
-      nullptr,
-      TRUE,
-      CREATE_NO_WINDOW,
-      nullptr,
-      nullptr,
-      &startupInfo,
-      &processInfo);
-
-  CloseHandle(writeHandle);
-
-  if (!created) {
-    CloseHandle(readHandle);
-    throw runtime_error("Failed to start auth helper process.");
-  }
-
-  std::array<char, 256> buffer{};
-  DWORD bytesRead = 0;
-  string output;
-  while (ReadFile(readHandle, buffer.data(), static_cast<DWORD>(buffer.size()), &bytesRead, nullptr) && bytesRead > 0) {
-    output.append(buffer.data(), bytesRead);
-  }
-
-  CloseHandle(readHandle);
-
-  WaitForSingleObject(processInfo.hProcess, INFINITE);
-  DWORD exitCode = 1;
-  GetExitCodeProcess(processInfo.hProcess, &exitCode);
-  CloseHandle(processInfo.hProcess);
-  CloseHandle(processInfo.hThread);
-
-  if (exitCode != 0) {
-    throw runtime_error("Token helper script failed: " + TrimOutput(output));
-  }
-
-  return TrimOutput(output);
-}
-#else
-string ExecuteProcess(const std::vector<string>& args) {
-  if (args.empty()) {
-    throw runtime_error("No process arguments were provided.");
-  }
-
-  int pipeFds[2] = {-1, -1};
-  if (pipe(pipeFds) != 0) {
-    throw runtime_error("Failed to create process output pipe.");
-  }
-
-  pid_t pid = fork();
-  if (pid < 0) {
-    close(pipeFds[0]);
-    close(pipeFds[1]);
-    throw runtime_error("Failed to start auth helper process.");
-  }
-
-  if (pid == 0) {
-    dup2(pipeFds[1], STDOUT_FILENO);
-    dup2(pipeFds[1], STDERR_FILENO);
-    close(pipeFds[0]);
-    close(pipeFds[1]);
-
-    std::vector<char*> execArgs;
-    execArgs.reserve(args.size() + 1);
-    for (const auto& arg : args) {
-      execArgs.push_back(const_cast<char*>(arg.c_str()));
+    if (buffer.size() >= 32768) {
+      throw runtime_error("Managed authentication host is unavailable.");
     }
-    execArgs.push_back(nullptr);
-    execvp(execArgs[0], execArgs.data());
-    _exit(127);
+    buffer.resize(buffer.size() * 2);
   }
-
-  close(pipeFds[1]);
-  std::array<char, 256> buffer{};
-  string output;
-  ssize_t count = 0;
-  while ((count = read(pipeFds[0], buffer.data(), buffer.size())) > 0) {
-    output.append(buffer.data(), static_cast<size_t>(count));
-  }
-  close(pipeFds[0]);
-
-  int status = 0;
-  waitpid(pid, &status, 0);
-  if (!WIFEXITED(status) || WEXITSTATUS(status) != 0) {
-    throw runtime_error("Token helper script failed: " + TrimOutput(output));
-  }
-
-  return TrimOutput(output);
 }
-#endif
 
-} // namespace
+void HOSTFXR_CALLTYPE IgnoreHostError(const char_t*) {
+}
+
+class ManagedRuntime final {
+ public:
+  static ManagedRuntime& Instance() {
+    static ManagedRuntime instance;
+    return instance;
+  }
+
+  acquire_token_fn AcquireToken() const {
+    return mAcquireToken;
+  }
+
+ private:
+  ManagedRuntime() {
+    const std::filesystem::path executableDirectory = GetExecutableDirectory();
+    const std::filesystem::path assemblyPath =
+        executableDirectory / L"MipAuth.Managed.dll";
+    const std::filesystem::path runtimeConfigPath =
+        executableDirectory / L"MipAuth.Managed.runtimeconfig.json";
+
+    std::vector<wchar_t> hostfxrPath(32768);
+    size_t hostfxrPathSize = hostfxrPath.size();
+    get_hostfxr_parameters parameters{
+        sizeof(get_hostfxr_parameters),
+        assemblyPath.c_str(),
+        nullptr};
+    if (get_hostfxr_path(
+            hostfxrPath.data(),
+            &hostfxrPathSize,
+            &parameters) != 0) {
+      throw runtime_error("Managed authentication host is unavailable.");
+    }
+
+    mHostfxr = LoadLibraryExW(
+        hostfxrPath.data(),
+        nullptr,
+        LOAD_LIBRARY_SEARCH_DLL_LOAD_DIR | LOAD_LIBRARY_SEARCH_SYSTEM32);
+    if (mHostfxr == nullptr) {
+      throw runtime_error("Managed authentication host is unavailable.");
+    }
+
+    auto initialize = reinterpret_cast<hostfxr_initialize_for_runtime_config_fn>(
+        GetProcAddress(mHostfxr, "hostfxr_initialize_for_runtime_config"));
+    auto getDelegate = reinterpret_cast<hostfxr_get_runtime_delegate_fn>(
+        GetProcAddress(mHostfxr, "hostfxr_get_runtime_delegate"));
+    auto close = reinterpret_cast<hostfxr_close_fn>(
+        GetProcAddress(mHostfxr, "hostfxr_close"));
+    auto setErrorWriter = reinterpret_cast<hostfxr_set_error_writer_fn>(
+        GetProcAddress(mHostfxr, "hostfxr_set_error_writer"));
+    if (initialize == nullptr ||
+        getDelegate == nullptr ||
+        close == nullptr ||
+        setErrorWriter == nullptr) {
+      throw runtime_error("Managed authentication host is unavailable.");
+    }
+
+    hostfxr_error_writer_fn previousWriter = setErrorWriter(IgnoreHostError);
+    hostfxr_handle context = nullptr;
+    int32_t result = initialize(runtimeConfigPath.c_str(), nullptr, &context);
+    if (result < 0 || context == nullptr) {
+      setErrorWriter(previousWriter);
+      throw runtime_error("Managed authentication host is unavailable.");
+    }
+
+    void* loadAssemblyAddress = nullptr;
+    result = getDelegate(
+        context,
+        hdt_load_assembly_and_get_function_pointer,
+        &loadAssemblyAddress);
+    close(context);
+    if (result < 0 || loadAssemblyAddress == nullptr) {
+      setErrorWriter(previousWriter);
+      throw runtime_error("Managed authentication host is unavailable.");
+    }
+
+    auto loadAssembly =
+        reinterpret_cast<load_assembly_and_get_function_pointer_fn>(
+            loadAssemblyAddress);
+    void* acquireTokenAddress = nullptr;
+    result = loadAssembly(
+        assemblyPath.c_str(),
+        L"MipAuth.Managed.EntryPoint, MipAuth.Managed",
+        L"AcquireToken",
+        UNMANAGEDCALLERSONLY_METHOD,
+        nullptr,
+        &acquireTokenAddress);
+    setErrorWriter(previousWriter);
+    if (result != 0 || acquireTokenAddress == nullptr) {
+      throw runtime_error("Managed authentication host is unavailable.");
+    }
+
+    mAcquireToken = reinterpret_cast<acquire_token_fn>(acquireTokenAddress);
+  }
+
+  ~ManagedRuntime() = default;
+  ManagedRuntime(const ManagedRuntime&) = delete;
+  ManagedRuntime& operator=(const ManagedRuntime&) = delete;
+
+  HMODULE mHostfxr = nullptr;
+  acquire_token_fn mAcquireToken = nullptr;
+};
+
+int32_t CheckedLength(const string& value) {
+  if (value.size() > static_cast<size_t>(std::numeric_limits<int32_t>::max())) {
+    throw runtime_error("Invalid authentication request.");
+  }
+  return static_cast<int32_t>(value.size());
+}
+
+struct InvocationResult {
+  int32_t result;
+  string token;
+  string error;
+};
+
+InvocationResult InvokeManaged(
+    const string& username,
+    const string& clientId,
+    const string& resource,
+    const string& authority,
+    const string& claims) {
+  std::vector<char> tokenBuffer(kMinimumBufferSize);
+  std::vector<char> errorBuffer(kMinimumBufferSize);
+
+  AuthRequest request{};
+  request.version = kRequestVersion;
+  request.structSize = sizeof(request);
+  request.username = username.data();
+  request.usernameLength = CheckedLength(username);
+  request.clientId = clientId.data();
+  request.clientIdLength = CheckedLength(clientId);
+  request.authority = authority.data();
+  request.authorityLength = CheckedLength(authority);
+  request.resource = resource.data();
+  request.resourceLength = CheckedLength(resource);
+  request.claims = claims.empty() ? nullptr : claims.data();
+  request.claimsLength = CheckedLength(claims);
+  request.tokenBuffer = tokenBuffer.data();
+  request.tokenBufferCapacity = static_cast<int32_t>(tokenBuffer.size());
+  request.errorBuffer = errorBuffer.data();
+  request.errorBufferCapacity = static_cast<int32_t>(errorBuffer.size());
+
+  int32_t result = ManagedRuntime::Instance().AcquireToken()(
+      &request,
+      static_cast<int32_t>(sizeof(request)));
+
+  if (request.tokenLength < 0 ||
+      request.tokenLength >= request.tokenBufferCapacity ||
+      request.errorLength < 0 ||
+      request.errorLength >= request.errorBufferCapacity) {
+    throw runtime_error("Managed authentication returned an invalid result.");
+  }
+
+  return {
+      result,
+      string(tokenBuffer.data(), request.tokenLength),
+      string(errorBuffer.data(), request.errorLength)};
+}
+
+}  // namespace
 
 namespace sample {
 namespace auth {
 
-// Simple, hard coded token example
-string AcquireToken() {
-  string mToken = "your token here";
-  return mToken;
-}
-
-// This function implements token acquisition by calling an external Python script.
-// Username is used as a login hint for browser-based sign-in.
-// Resource and authority are provided by the SDK challenge.
 string AcquireToken(
     const string& username,
     const string& clientId,
     const string& resource,
-    const string& authority) {
-  const string authScriptPath = "auth.py";
-  if (!sample::utils::FileExists(authScriptPath.c_str()))
-    throw runtime_error("Unable to find auth script.");
-
-  std::vector<string> args = {
-      "python",
-      authScriptPath,
-      "-u", username,
-      "-a", authority,
-      "-r", resource,
-      "-c", clientId};
-
-  string result = ExecuteProcess(args);
-  if (result.empty())
-    throw runtime_error("Failed to acquire token. Ensure Python and MSAL are installed correctly.");
-
-  return result;
+    const string& authority,
+    const string& claims) {
+  InvocationResult invocation =
+      InvokeManaged(username, clientId, resource, authority, claims);
+  if (invocation.result != 0 || invocation.token.empty()) {
+    const string message = invocation.error.empty()
+        ? "Authentication failed."
+        : invocation.error;
+    throw runtime_error(message);
+  }
+  return invocation.token;
 }
 
-} // namespace auth
-} // namespace sample
+bool ValidateManagedHost() {
+  InvocationResult invocation = InvokeManaged(
+      "smoke@example.com",
+      "11111111-1111-1111-1111-111111111111",
+      "https://api.aadrm.com",
+      "https://invalid.example/organizations",
+      "");
+  return invocation.result == kInvalidAuthority &&
+      invocation.error == "Invalid authority." &&
+      invocation.token.empty();
+}
+
+}  // namespace auth
+}  // namespace sample

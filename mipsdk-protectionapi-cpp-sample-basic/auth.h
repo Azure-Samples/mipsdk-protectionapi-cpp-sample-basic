@@ -31,12 +31,13 @@
 namespace sample {
 	namespace auth {
 
-		std::string AcquireToken();
-
-		std::string AcquireToken(		
+		std::string AcquireToken(
 			const std::string& username,
 			const std::string& clientId,
 			const std::string& resource,
-			const std::string& authority);
+			const std::string& authority,
+			const std::string& claims);
+
+		bool ValidateManagedHost();
 	}
 }

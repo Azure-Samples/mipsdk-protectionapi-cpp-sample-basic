@@ -28,26 +28,10 @@
 
 #include "utils.h"
 #include <fstream>
-#include <functional>
-#include <memory>
 #include <string>
 
-#if defined(_WIN32) || defined(_WIN64)
-#define POPEN _popen
-#define PCLOSE _pclose
-#else
-#define POPEN popen
-#define PCLOSE pclose
-#endif
-
-using std::function;
 using std::ifstream;
-using std::runtime_error;
 using std::string;
-using std::unique_ptr;
-
-template<typename T>
-using custom_unique_ptr = unique_ptr<T, function<void(T*)>>;
 
 static const char kPathSeparatorWindows = '\\';
 static const char kPathSeparatorUnix = '/';
@@ -58,22 +42,6 @@ static const char kPathSeparatorsAll[] = { kPathSeparatorWindows, kPathSeparator
 
 namespace sample {	
 	namespace utils {
-		string Execute(const char* cmd) {
-			char buffer[128];
-			string result = "";
-
-			custom_unique_ptr<FILE> pipe(POPEN(cmd, "r"), [](FILE* f) { PCLOSE(f); });
-			if (nullptr == pipe.get())
-				throw runtime_error("popen() failed");
-
-			while (!feof(pipe.get())) {
-				if (fgets(buffer, 128, pipe.get()) != NULL)
-					result += buffer;
-			}
-
-			return result;
-		}
-
 		bool FileExists(const char* path) {
 			ifstream file(path);
 			return file.good();

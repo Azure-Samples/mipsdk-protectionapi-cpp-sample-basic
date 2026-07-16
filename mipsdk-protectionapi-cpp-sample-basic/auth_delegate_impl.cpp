@@ -29,6 +29,7 @@
 #include "auth_delegate_impl.h"
 #include "auth.h"
 
+#include <iostream>
 #include <stdexcept>
 
 using std::runtime_error;
@@ -55,10 +56,24 @@ namespace sample {
 			const std::shared_ptr<void>& /*context*/,
 			OAuth2Token& token) {
 			
-			// Call token acquisition, using username as login hint and challenge resource/authority from the SDK.
-			string accessToken = sample::auth::AcquireToken(mUserName, mApplicationInfo.applicationId, challenge.GetResource(), challenge.GetAuthority());
-			token.SetAccessToken(accessToken);
-			return true;
+			try {
+				string accessToken = sample::auth::AcquireToken(
+					mUserName,
+					mApplicationInfo.applicationId,
+					challenge.GetResource(),
+					challenge.GetAuthority(),
+					challenge.GetClaims());
+				token.SetAccessToken(accessToken);
+				return true;
+			}
+			catch (const std::exception& error) {
+				std::cerr << "Authentication failed: " << error.what() << std::endl;
+				return false;
+			}
+			catch (...) {
+				std::cerr << "Authentication failed." << std::endl;
+				return false;
+			}
 		}
 
 	} // namespace sample
