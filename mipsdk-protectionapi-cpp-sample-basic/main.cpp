@@ -61,7 +61,7 @@ int RunSample(int argc, char* argv[])
 		}
 	}
 
-	// local variables to store target file and the label that will be applied to the file.
+	// Local variables for template selection and plaintext/ciphertext flow.
 	
 	string templateToApply;
 	string plaintext;
@@ -79,21 +79,19 @@ int RunSample(int argc, char* argv[])
 	// Friendly Name should be the name of the application as it should appear in reports.
 	mip::ApplicationInfo appInfo{ clientId,  "MIP SDK Protection Sample for C++", "1.18.0" };
 
-	// All actions for this tutorial project are implemented in samples::policy::Action
-	// Source files are Action.h/cpp.	
-	// Action's constructor takes in the mip::ApplicationInfo object and uses the client ID for auth.
+	// Sample operations are implemented in sample::protection::Action (Action.h/cpp).
+	// Action's constructor accepts app metadata and the username used for authentication.
 	Action action = Action(appInfo, userName);
 
 	while (true)
 	{
 		templateToApply = "";
 
-		// Call action.ListLabels() to display all available labels, then pause.
+		// Display all available protection templates.
 		cout << "*** Template List: " << endl;
 		action.ListTemplates();		
 
-		// Prompt the user to copy the Label ID from a displayed label. This will be stored
-		// then applied later to a file.		
+		// Prompt for a template ID from the list.
 		cout << "Copy a template ID from above to apply to a new string or q to quit." << endl;
 		cout << endl << "Template ID: ";
 		cin >> templateToApply;
@@ -103,15 +101,12 @@ int RunSample(int argc, char* argv[])
 			return 0;
 		}
 
-		// Generate a new protection descriptor and store publishing license
-		
-
-		// Prompt the user to enter a file. A labeled copy of this file will be created.
+		// Prompt for plaintext to encrypt.
 		cout << "Enter some text to encrypt: ";
 		std::getline(std::cin >> std::ws, plaintext);
 				
-		// Show action plan
-		cout << "Applying Label ID " + templateToApply + " to: " << endl << plaintext << endl;
+		// Show selected template and input text.
+		cout << "Applying template ID " + templateToApply + " to: " << endl << plaintext << endl;
 
 		// Protect the input string using the previously generated PL.
 		auto publishingLicense = action.ProtectString(plaintext, ciphertext, templateToApply);

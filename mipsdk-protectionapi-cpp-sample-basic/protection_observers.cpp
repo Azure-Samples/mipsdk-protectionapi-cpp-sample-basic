@@ -15,7 +15,7 @@ using std::vector;
 using std::string;
 using std::exception_ptr;
 
-// Protection Profile Observers
+// Observer callbacks that bridge MIP async APIs to std::promise/std::future.
 void ProtectionProfileObserverImpl::OnLoadSuccess(
 	const shared_ptr<mip::ProtectionProfile>& profile,
 	const shared_ptr<void>& context) {
@@ -67,4 +67,3 @@ void ProtectionEngineObserverImpl::OnGetTemplatesFailure(const exception_ptr& Fa
 	auto loadPromise = static_cast<promise<vector<shared_ptr<mip::TemplateDescriptor>>>*>(context.get());
 	loadPromise->set_exception(Failure);
 };
-

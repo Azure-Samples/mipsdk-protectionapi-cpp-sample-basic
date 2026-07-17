@@ -37,7 +37,7 @@ namespace sample {
 namespace consent {
 
 Consent ConsentDelegateImpl::GetUserConsent(const string& url) {
-  // Accept the consent to connect to the url
+  // This sample runs non-interactively and accepts SDK consent prompts by default.
   std::cout << "This is the consent delegate." << std::endl << std::endl;
 
   std::cout << "SDK will connect to: " << url << std::endl;
@@ -47,8 +47,7 @@ Consent ConsentDelegateImpl::GetUserConsent(const string& url) {
   std::cout << "3) Reject" << std::endl;
   std::cout << "Select an option: ";
   char input;
-  // std::cin >> input;
-  input = 1;
+  input = '2';
 
   switch (input)
   {

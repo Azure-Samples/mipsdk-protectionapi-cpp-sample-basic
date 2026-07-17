@@ -62,8 +62,8 @@ using mip::ProtectionHandler;
 namespace sample {
 	namespace protection {
 
-		// Constructor accepts mip::ApplicationInfo object and uses it to initialize AuthDelegateImpl.
-		// Specifically, AuthDelegateInfo uses mAppInfo.ApplicationId for AAD client_id value.		
+		// Constructor accepts mip::ApplicationInfo and uses it to initialize AuthDelegateImpl.
+		// AuthDelegateImpl forwards mAppInfo.applicationId as the Microsoft Entra client ID.
 		Action::Action(const mip::ApplicationInfo appInfo,
 			const std::string& username)
 			: mAppInfo(appInfo),
@@ -169,19 +169,18 @@ namespace sample {
 		}
 
 
-		// Function recursively lists all labels available for a user to	std::cout.
+		// List all protection templates available to the current user.
 		void Action::ListTemplates() {
 
-			// If mEngine hasn't been set, call AddNewFileEngine() to load the engine.
+			// If mEngine has not been set, call AddNewProtectionEngine() to load it.
 			if (!mEngine) {			
 				AddNewProtectionEngine();
 			}
 
 			const shared_ptr<ProtectionEngineObserverImpl> engineObserver = std::make_shared<ProtectionEngineObserverImpl>();
 
-			// Create a context to pass to 'ProtectionEngine::GetTemplateListAsync'. That context will be forwarded to the
-			// corresponding ProtectionEngine::Observer methods. In this case, we use promises/futures as a simple way to detect 
-			// the async operation completes synchronously.
+			// Create context for GetTemplatesAsync. The observer receives this same context, and
+			// promises/futures let the sample block until the async call completes.
 			auto loadPromise = std::make_shared<std::promise<vector<shared_ptr<mip::TemplateDescriptor>>>>();
 			std::future<vector<shared_ptr<mip::TemplateDescriptor>>> loadFuture = loadPromise->get_future();
 			mEngine->GetTemplatesAsync(engineObserver, loadPromise);
@@ -205,7 +204,6 @@ namespace sample {
 
 			auto handler = CreateProtectionHandlerForPublishing(descriptor);
 			std::vector<uint8_t> outputBuffer;
-			// std::vector<uint8_t> inputBuffer(static_cast<size_t>(plaintext.size()));
 			std::vector<uint8_t> inputBuffer(plaintext.begin(), plaintext.end());
 
 			outputBuffer.resize(static_cast<size_t>(handler->GetProtectedContentLength(plaintext.size(), true)));
@@ -232,8 +230,6 @@ namespace sample {
 			auto handler = CreateProtectionHandlerForConsumption(serializedLicense);
 			std::vector<uint8_t> outputBuffer(static_cast<size_t>(ciphertext.size()));
 
-				
-			// std::vector<uint8_t> inputBuffer(static_cast<size_t>(plaintext.size()));
 			std::vector<uint8_t> inputBuffer(ciphertext.begin(), ciphertext.end());
 			
 			int64_t decryptedSize = handler->DecryptBuffer(
