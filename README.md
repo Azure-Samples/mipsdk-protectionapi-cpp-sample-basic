@@ -50,7 +50,6 @@ Authentication against the Microsoft Entra ID tenant requires creating a native 
 > Skip this step if you've already created a registration for a previous sample. You may continue to use that client ID.
 
 1. Sign in to the [Microsoft Entra admin center](https://entra.microsoft.com) as at least an [Application Developer](https://learn.microsoft.com/en-us/entra/identity-platform/quickstart-register-app#prerequisites).
-   > If app registration is restricted in your tenant, a custom role can also grant the required `microsoft.directory/applications/createAsOwner` or `microsoft.directory/applications/create` permission. See [Custom role permissions for app registration](https://learn.microsoft.com/en-us/entra/identity/role-based-access-control/custom-available-permissions) for details.
 2. Select **Entra ID**, then **App registrations** on the left side menu.
 3. Select **New registration**
 4. For name, enter **MipSdk-Sample-Apps**
@@ -76,7 +75,6 @@ The **Application registration** screen should now be displaying your new applic
 3. Select **Mobile and desktop applications**
 4. Add the default native client redirect URI **http://localhost**.
 5. Under **Settings** set **Allow public client flows** to **Enabled**.
-   > This is required for this native public-client sample.
 6. Click **Save**.
 
 ### Update Client ID and Username
