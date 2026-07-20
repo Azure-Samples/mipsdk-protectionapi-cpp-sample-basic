@@ -29,6 +29,7 @@
 #ifndef SAMPLES_AUTH_AUTHDELEGATE_IMPL_H_
 #define SAMPLES_AUTH_AUTHDELEGATE_IMPL_H_
 
+#include <memory>
 #include <string>
 
 #include "mip/common_types.h"
@@ -45,14 +46,12 @@ namespace sample {
 
 			AuthDelegateImpl(
 				const mip::ApplicationInfo& applicationInfo,
-				const std::string& username,
-				const std::string& password);
+				const std::string& username);
 						
-			bool AcquireOAuth2Token(const mip::Identity& identity, const OAuth2Challenge& challenge, OAuth2Token& token) override;
+			bool AcquireOAuth2Token(const mip::Identity& identity, const OAuth2Challenge& challenge, const std::shared_ptr<void>& context, OAuth2Token& token) override;
 
 		private:
 			std::string mUserName;
-			std::string mPassword;
 			std::string mClientId;	
 			mip::ApplicationInfo mApplicationInfo;
 		};

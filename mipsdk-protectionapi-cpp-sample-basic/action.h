@@ -61,8 +61,7 @@ namespace sample {
 		public:
 
 			Action(const mip::ApplicationInfo appInfo,
-				const std::string& username,
-				const std::string& password);
+				const std::string& username);
 			~Action();
 
 			void ListTemplates();							// List all labels associated engine loaded for user						
@@ -85,7 +84,6 @@ namespace sample {
 			mip::ApplicationInfo mAppInfo;											// mip::ApplicationInfo object for storing client_id and friendlyname
 
 			std::string mUsername; // store username to pass to auth delegate and to generate Identity
-			std::string mPassword; // store password to pass to auth delegate
 		};
 
 		

@@ -1,9 +1,12 @@
-﻿h
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 15
-VisualStudioVersion = 15.0.27703.2000
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "mipsdk-protectionapi-cpp-sample-basic", mipsdk-protectionapi-cpp-sample-basic"mipsdk-protectionapi-cpp-sample-basic\mipsdk-protectionapi-cpp-sample-basic.vcxproj", "{F8C94F02-CAD2-4449-843F-D6ABCD8A6634}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "mipsdk-protectionapi-cpp-sample-basic", "mipsdk-protectionapi-cpp-sample-basic\mipsdk-protectionapi-cpp-sample-basic.vcxproj", "{F8C94F02-CAD2-4449-843F-D6ABCD8A6634}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MipAuth.Managed", "MipAuth.Managed\MipAuth.Managed.csproj", "{3DDB926F-0E5D-4E09-9945-5331456967A1}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MipAuth.Managed.Tests", "MipAuth.Managed.Tests\MipAuth.Managed.Tests.csproj", "{912DB5B5-0BBF-4AF0-83B3-C41E8910C6EC}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -21,6 +24,22 @@ Global
 		{F8C94F02-CAD2-4449-843F-D6ABCD8A6634}.Release|x64.Build.0 = Release|x64
 		{F8C94F02-CAD2-4449-843F-D6ABCD8A6634}.Release|x86.ActiveCfg = Release|Win32
 		{F8C94F02-CAD2-4449-843F-D6ABCD8A6634}.Release|x86.Build.0 = Release|Win32
+		{3DDB926F-0E5D-4E09-9945-5331456967A1}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{3DDB926F-0E5D-4E09-9945-5331456967A1}.Debug|x64.Build.0 = Debug|Any CPU
+		{3DDB926F-0E5D-4E09-9945-5331456967A1}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{3DDB926F-0E5D-4E09-9945-5331456967A1}.Debug|x86.Build.0 = Debug|Any CPU
+		{3DDB926F-0E5D-4E09-9945-5331456967A1}.Release|x64.ActiveCfg = Release|Any CPU
+		{3DDB926F-0E5D-4E09-9945-5331456967A1}.Release|x64.Build.0 = Release|Any CPU
+		{3DDB926F-0E5D-4E09-9945-5331456967A1}.Release|x86.ActiveCfg = Release|Any CPU
+		{3DDB926F-0E5D-4E09-9945-5331456967A1}.Release|x86.Build.0 = Release|Any CPU
+		{912DB5B5-0BBF-4AF0-83B3-C41E8910C6EC}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{912DB5B5-0BBF-4AF0-83B3-C41E8910C6EC}.Debug|x64.Build.0 = Debug|Any CPU
+		{912DB5B5-0BBF-4AF0-83B3-C41E8910C6EC}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{912DB5B5-0BBF-4AF0-83B3-C41E8910C6EC}.Debug|x86.Build.0 = Debug|Any CPU
+		{912DB5B5-0BBF-4AF0-83B3-C41E8910C6EC}.Release|x64.ActiveCfg = Release|Any CPU
+		{912DB5B5-0BBF-4AF0-83B3-C41E8910C6EC}.Release|x64.Build.0 = Release|Any CPU
+		{912DB5B5-0BBF-4AF0-83B3-C41E8910C6EC}.Release|x86.ActiveCfg = Release|Any CPU
+		{912DB5B5-0BBF-4AF0-83B3-C41E8910C6EC}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

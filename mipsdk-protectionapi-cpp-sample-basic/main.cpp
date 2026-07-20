@@ -33,6 +33,7 @@
 
 
 #include "action.h"
+#include "auth.h"
 #include "mip/common_types.h"
 #include "utils.h"
 
@@ -46,44 +47,51 @@ using std::endl;
 
 using sample::protection::Action;
 
-int main()
+int RunSample(int argc, char* argv[])
 {
-	// local variables to store target file and the label that will be applied to the file.
+	if (argc == 2 && std::string(argv[1]) == "--auth-host-smoke")
+	{
+		try
+		{
+			return sample::auth::ValidateManagedHost() ? 0 : 1;
+		}
+		catch (const std::exception&)
+		{
+			return 1;
+		}
+	}
+
+	// Local variables for template selection and plaintext/ciphertext flow.
 	
 	string templateToApply;
 	string plaintext;
 	string ciphertext;
 	string decryptedText;
 	
-	// Client ID should be the client ID registered in Azure AD for your custom application.
+	// Client ID should be the client ID registered in Microsoft Entra ID for your custom application.
 	std::string clientId = "YOUR CLIENT ID";
 
-	// Username and password are required in this sample as the oauth2 token is obtained via Python script and MSAL auth.
-	// DO NOT embed credentials for administrative or production accounts. 
+	// Username is used as identity and a login hint for browser-based sign-in.
 	std::string userName = "YOUR TEST USER ID";
-	std::string password = "YOUR TEST USER PASSWORD";
 
 	// Create the mip::ApplicationInfo object. 
 
 	// Friendly Name should be the name of the application as it should appear in reports.
-	mip::ApplicationInfo appInfo{ clientId,  "MIP SDK Protection Sample for C++", "1.11.0" };
+	mip::ApplicationInfo appInfo{ clientId,  "MIP SDK Protection Sample for C++", "1.18.0" };
 
-	// All actions for this tutorial project are implemented in samples::policy::Action
-	// Source files are Action.h/cpp.	
-	// Action's constructor takes in the mip::ApplicationInfo object and uses the client ID for auth.
-	// Username and password are required in this sample as the oauth2 token is obtained via Python script and basic auth.
-	Action action = Action(appInfo, userName, password);
+	// Sample operations are implemented in sample::protection::Action (Action.h/cpp).
+	// Action's constructor accepts app metadata and the username used for authentication.
+	Action action = Action(appInfo, userName);
 
 	while (true)
 	{
 		templateToApply = "";
 
-		// Call action.ListLabels() to display all available labels, then pause.
+		// Display all available protection templates.
 		cout << "*** Template List: " << endl;
 		action.ListTemplates();		
 
-		// Prompt the user to copy the Label ID from a displayed label. This will be stored
-		// then applied later to a file.		
+		// Prompt for a template ID from the list.
 		cout << "Copy a template ID from above to apply to a new string or q to quit." << endl;
 		cout << endl << "Template ID: ";
 		cin >> templateToApply;
@@ -93,15 +101,12 @@ int main()
 			return 0;
 		}
 
-		// Generate a new protection descriptor and store publishing license
-		
-
-		// Prompt the user to enter a file. A labeled copy of this file will be created.
+		// Prompt for plaintext to encrypt.
 		cout << "Enter some text to encrypt: ";
 		std::getline(std::cin >> std::ws, plaintext);
 				
-		// Show action plan
-		cout << "Applying Label ID " + templateToApply + " to: " << endl << plaintext << endl;
+		// Show selected template and input text.
+		cout << "Applying template ID " + templateToApply + " to: " << endl << plaintext << endl;
 
 		// Protect the input string using the previously generated PL.
 		auto publishingLicense = action.ProtectString(plaintext, ciphertext, templateToApply);
@@ -121,4 +126,20 @@ int main()
 	return 0;
 }
 
-
+int main(int argc, char* argv[])
+{
+	try
+	{
+		return RunSample(argc, argv);
+	}
+	catch (const std::exception& error)
+	{
+		std::cerr << "Sample failed: " << error.what() << std::endl;
+		return 1;
+	}
+	catch (...)
+	{
+		std::cerr << "Sample failed." << std::endl;
+		return 1;
+	}
+}
