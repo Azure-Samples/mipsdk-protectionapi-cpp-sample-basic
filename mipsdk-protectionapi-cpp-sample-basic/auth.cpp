@@ -97,7 +97,7 @@ std::filesystem::path GetExecutableDirectory() {
     if (length == 0) {
       throw runtime_error("Managed authentication host is unavailable.");
     }
-    if (length < buffer.size() - 1) {
+    if (length < static_cast<DWORD>(buffer.size())) {
       return std::filesystem::path(
           std::wstring(buffer.data(), length)).parent_path();
     }
