@@ -10,9 +10,8 @@ namespace MipAuth.Managed;
 
 internal static class TokenAcquirer
 {
-    private readonly record struct ApplicationKey(string ClientId, string Authority);
-
-    private static readonly ConcurrentDictionary<ApplicationKey, Lazy<IPublicClientApplication>> Applications = new();
+    private static readonly ConcurrentDictionary<string, IPublicClientApplication> Applications =
+        new(StringComparer.Ordinal);
 
     internal static async Task<string?> AcquireAsync(
         string username,
@@ -21,26 +20,17 @@ internal static class TokenAcquirer
         string scope,
         string? claims)
     {
-        var key = new ApplicationKey(clientId, authority);
+        string normalizedAuthority = NormalizeAuthorityForMsal(authority, username);
+        string cacheKey = $"{clientId}\n{normalizedAuthority}";
         IPublicClientApplication application = Applications.GetOrAdd(
-            key,
-            static value => new Lazy<IPublicClientApplication>(
-                () => PublicClientApplicationBuilder
-                    .Create(value.ClientId)
-                    .WithAuthority(value.Authority)
-                    .WithDefaultRedirectUri()
-                    .Build(),
-                LazyThreadSafetyMode.ExecutionAndPublication)).Value;
+            cacheKey,
+            _ => PublicClientApplicationBuilder
+                .Create(clientId)
+                .WithAuthority(normalizedAuthority)
+                .WithDefaultRedirectUri()
+                .Build());
 
-        IEnumerable<IAccount> accounts;
-        try
-        {
-            accounts = await application.GetAccountsAsync().ConfigureAwait(false);
-        }
-        catch (MsalException)
-        {
-            accounts = [];
-        }
+        IEnumerable<IAccount> accounts = await application.GetAccountsAsync().ConfigureAwait(false);
 
         foreach (IAccount account in FindUsernameMatches(accounts, username))
         {
@@ -60,9 +50,6 @@ internal static class TokenAcquirer
                 }
             }
             catch (MsalUiRequiredException)
-            {
-            }
-            catch (MsalException)
             {
             }
         }
@@ -91,4 +78,58 @@ internal static class TokenAcquirer
                 account.Username,
                 username,
                 StringComparison.OrdinalIgnoreCase));
+
+    internal static string NormalizeAuthorityForMsal(string authority, string username)
+    {
+        if (!Uri.TryCreate(authority, UriKind.Absolute, out Uri? uri))
+        {
+            return authority;
+        }
+
+        string path = uri.AbsolutePath.Trim('/');
+        if (!path.Equals("common", StringComparison.OrdinalIgnoreCase) &&
+            !path.Equals("organizations", StringComparison.OrdinalIgnoreCase))
+        {
+            return authority.TrimEnd('/');
+        }
+
+        string tenant = GetTenantDomain(username);
+        return $"https://{uri.IdnHost.ToLowerInvariant()}/{tenant}";
+    }
+
+    private static string GetTenantDomain(string username)
+    {
+        int separator = username.LastIndexOf('@');
+        string domain = separator > 0 && separator < username.Length - 1
+            ? username[(separator + 1)..].ToLowerInvariant()
+            : string.Empty;
+        if (!IsValidDnsHost(domain))
+        {
+            throw new ArgumentException("Username must contain a valid tenant domain.");
+        }
+
+        return domain;
+    }
+
+    private static bool IsValidDnsHost(string host)
+    {
+        if (host.Length is 0 or > 253 || host.Any(character => character > 0x7f))
+        {
+            return false;
+        }
+
+        foreach (string label in host.Split('.'))
+        {
+            if (label.Length is 0 or > 63 ||
+                !char.IsAsciiLetterOrDigit(label[0]) ||
+                !char.IsAsciiLetterOrDigit(label[^1]) ||
+                label.Any(character =>
+                    !char.IsAsciiLetterOrDigit(character) && character != '-'))
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
 }
