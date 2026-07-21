@@ -13,12 +13,12 @@ internal static class TokenAcquirer
     private static readonly ConcurrentDictionary<string, IPublicClientApplication> Applications =
         new(StringComparer.Ordinal);
 
-    internal static async Task<string?> AcquireAsync(
+    internal static async Task<string> AcquireAsync(
         string username,
         string clientId,
         string authority,
         string scope,
-        string? claims)
+        string claims)
     {
         string normalizedAuthority = NormalizeAuthorityForMsal(authority, username);
         string cacheKey = $"{clientId}\n{normalizedAuthority}";
@@ -31,8 +31,11 @@ internal static class TokenAcquirer
                 .Build());
 
         IEnumerable<IAccount> accounts = await application.GetAccountsAsync().ConfigureAwait(false);
-
-        foreach (IAccount account in FindUsernameMatches(accounts, username))
+        foreach (IAccount account in accounts.Where(
+                     account => string.Equals(
+                         account.Username,
+                         username,
+                         StringComparison.OrdinalIgnoreCase)))
         {
             try
             {
@@ -44,10 +47,7 @@ internal static class TokenAcquirer
                 }
 
                 AuthenticationResult result = await silent.ExecuteAsync().ConfigureAwait(false);
-                if (!string.IsNullOrEmpty(result.AccessToken))
-                {
-                    return result.AccessToken;
-                }
+                return result.AccessToken;
             }
             catch (MsalUiRequiredException)
             {
@@ -65,19 +65,8 @@ internal static class TokenAcquirer
 
         AuthenticationResult interactiveResult =
             await interactive.ExecuteAsync().ConfigureAwait(false);
-        return string.IsNullOrEmpty(interactiveResult.AccessToken)
-            ? null
-            : interactiveResult.AccessToken;
+        return interactiveResult.AccessToken;
     }
-
-    internal static IEnumerable<IAccount> FindUsernameMatches(
-        IEnumerable<IAccount> accounts,
-        string username) =>
-        accounts.Where(
-            account => string.Equals(
-                account.Username,
-                username,
-                StringComparison.OrdinalIgnoreCase));
 
     internal static string NormalizeAuthorityForMsal(string authority, string username)
     {

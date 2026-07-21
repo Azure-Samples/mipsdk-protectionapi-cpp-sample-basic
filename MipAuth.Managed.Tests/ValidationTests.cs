@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-using Microsoft.Identity.Client;
 using Xunit;
 
 namespace MipAuth.Managed.Tests;
@@ -83,23 +82,38 @@ public sealed class ValidationTests
         Assert.Throws<ArgumentException>(() => Validation.ValidateIdentity("user@contoso.com", "not-a-guid"));
     }
 
-    [Fact]
-    public void AccountSelectionMatchesOnlyRequestedUsername()
+    [Theory]
+    [InlineData(
+        "https://login.microsoftonline.com/common",
+        "user@contoso.onmicrosoft.com",
+        "https://login.microsoftonline.com/contoso.onmicrosoft.com")]
+    [InlineData(
+        "https://login.microsoftonline.com/organizations",
+        "user@contoso.com",
+        "https://login.microsoftonline.com/contoso.com")]
+    public void NormalizeAuthorityForMsal_ConvertsTenantIndependentAuthorities(
+        string authority,
+        string username,
+        string expected)
     {
-        IAccount[] accounts =
-        [
-            new TestAccount("other@contoso.com"),
-            new TestAccount("USER@CONTOSO.COM"),
-        ];
-
-        IAccount match = Assert.Single(TokenAcquirer.FindUsernameMatches(accounts, "user@contoso.com"));
-        Assert.Equal("USER@CONTOSO.COM", match.Username);
+        Assert.Equal(expected, TokenAcquirer.NormalizeAuthorityForMsal(authority, username));
     }
 
-    private sealed class TestAccount(string username) : IAccount
+    [Fact]
+    public void NormalizeAuthorityForMsal_LeavesTenantSpecificAuthorityUnchanged()
     {
-        public string Username { get; } = username;
-        public string Environment => "login.microsoftonline.com";
-        public AccountId HomeAccountId { get; } = new("id", "tenant", "id.tenant");
+        const string authority = "https://login.microsoftonline.com/contoso.onmicrosoft.com/";
+        Assert.Equal(
+            "https://login.microsoftonline.com/contoso.onmicrosoft.com",
+            TokenAcquirer.NormalizeAuthorityForMsal(authority, "user@contoso.onmicrosoft.com"));
+    }
+
+    [Fact]
+    public void NormalizeAuthorityForMsal_InvalidUsernameForCommonThrows()
+    {
+        Assert.Throws<ArgumentException>(() =>
+            TokenAcquirer.NormalizeAuthorityForMsal(
+                "https://login.microsoftonline.com/common",
+                "user"));
     }
 }

@@ -74,12 +74,12 @@ public static unsafe class EntryPoint
                 return Complete(request, AuthResult.InvalidResource, "Invalid resource.");
             }
 
-            string? token = TokenAcquirer.AcquireAsync(
+            string token = TokenAcquirer.AcquireAsync(
                     username,
                     clientId,
                     authority,
                     scope,
-                    claims)
+                    claims ?? string.Empty)
                 .GetAwaiter()
                 .GetResult();
 

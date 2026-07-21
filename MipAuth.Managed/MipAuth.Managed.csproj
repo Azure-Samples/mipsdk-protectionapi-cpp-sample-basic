@@ -6,10 +6,30 @@
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <EnableDynamicLoading>true</EnableDynamicLoading>
     <GenerateRuntimeConfigurationFiles>true</GenerateRuntimeConfigurationFiles>
+    <GenerateDependencyFile>true</GenerateDependencyFile>
     <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
+    <NativeHostPackVersion>8.0.29</NativeHostPackVersion>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="Microsoft.Identity.Client" Version="4.86.1" />
+    <PackageDownload Include="Microsoft.NETCore.App.Host.win-x64" Version="[$(NativeHostPackVersion)]" />
   </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="MipAuth.Managed.Tests" />
+  </ItemGroup>
+
+  <Target Name="StageNativeHostAssets" BeforeTargets="Build">
+    <ItemGroup>
+      <NativeHostAsset Include="$(NuGetPackageRoot)microsoft.netcore.app.host.win-x64\$(NativeHostPackVersion)\runtimes\win-x64\native\nethost.h" />
+      <NativeHostAsset Include="$(NuGetPackageRoot)microsoft.netcore.app.host.win-x64\$(NativeHostPackVersion)\runtimes\win-x64\native\hostfxr.h" />
+      <NativeHostAsset Include="$(NuGetPackageRoot)microsoft.netcore.app.host.win-x64\$(NativeHostPackVersion)\runtimes\win-x64\native\coreclr_delegates.h" />
+      <NativeHostAsset Include="$(NuGetPackageRoot)microsoft.netcore.app.host.win-x64\$(NativeHostPackVersion)\runtimes\win-x64\native\nethost.lib" />
+      <NativeHostAsset Include="$(NuGetPackageRoot)microsoft.netcore.app.host.win-x64\$(NativeHostPackVersion)\runtimes\win-x64\native\nethost.dll" />
+    </ItemGroup>
+    <Copy SourceFiles="@(NativeHostAsset)"
+          DestinationFolder="$(MSBuildProjectDirectory)\obj\native-host"
+          SkipUnchangedFiles="true" />
+  </Target>
 </Project>
